@@ -50,7 +50,7 @@ No establezcas un comando de inicio adicional: el Dockerfile inicia el JAR y Spr
 
 La integración usa solicitudes REST desde Java y exige JSON estructurado, validado antes de aplicar decisiones. [Claves de Gemini](https://ai.google.dev/gemini-api/docs/api-key), [salidas estructuradas](https://ai.google.dev/gemini-api/docs/structured-output).
 
-## 5. Frontend Java en Vercel
+## 5. Frontend TypeScript en Vercel
 
 1. Entra a [Vercel](https://vercel.com) y selecciona **Add New → Project**.
 2. Importa el repositorio de GitHub y selecciona la rama del proyecto como rama de producción.
@@ -66,15 +66,15 @@ Usa el origen, sin `/api`, rutas, claves o parámetros. Debe usar HTTPS.
 5. `vercel.json` ya establece:
 
 ```text
-Install Command: echo No npm dependencies required
-Build Command: node scripts/build-web.mjs
+Install Command: npm ci
+Build Command: npm run build
 Output Directory: frontend/dist
 ```
 
-6. Despliega. El script encuentra Java o descarga JDK 21 para Linux, descarga Maven si hace falta y compila GWT. La salida es HTML, CSS y JavaScript generado desde las clases Java.
+6. Selecciona Node.js **24.x** en la configuración de compilación y despliega. npm instala las versiones fijadas en `package-lock.json`; el script verifica TypeScript estricto y compila con Vite. La salida es HTML, CSS y JavaScript generado desde TypeScript. Vercel no necesita Java ni Maven.
 7. Guarda el dominio definitivo de Vercel.
 
-Vercel sirve los archivos generados; la aplicación Java del servidor permanece en Railway. [Configurar una compilación](https://vercel.com/docs/builds/configure-a-build), [GWT](https://www.gwtproject.org/overview.html).
+Vercel sirve los archivos generados; la aplicación Java del servidor permanece en Railway. `PUBLIC_API_URL` se incorpora a la compilación: al cambiarla, vuelve a desplegar el frontend. [Configurar una compilación](https://vercel.com/docs/builds/configure-a-build), [Vite](https://vite.dev/guide/).
 
 ## 6. Conectar los dominios
 
@@ -116,6 +116,6 @@ Las credenciales de conexión TURN se entregan al navegador, como requiere WebRT
 | Clips fallan o desaparecen tras reiniciar | FFmpeg instalado (Dockerfile), volumen backend en `/data` y `MEDIA_DIR=/data/media`. |
 | IA muestra reglas locales | `GEMINI_API_KEY` ausente en backend o servicio aún sin reiniciar. |
 | IA envía todos los mensajes a revisión | Cuota, modelo, conectividad o respuesta inválida. Revisa `ai_requests.status`. |
-| Maven/JDK no se descarga en Vercel | Conectividad del proceso de build a Maven Central y Adoptium; como alternativa compila localmente y publica `frontend/dist` como proyecto estático. |
+| La compilación del frontend falla | Node 24.x, `npm ci`, dependencias de `package-lock.json` y el resultado de `npm run typecheck`. |
 
 Railway, almacenamiento y Gemini pueden requerir un plan o consumo facturado según la cuenta. Esta entrega no configura facturación ni publica automáticamente en tus cuentas.

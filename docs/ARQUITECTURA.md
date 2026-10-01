@@ -4,7 +4,7 @@
 
 ```mermaid
 flowchart LR
-    U[Computador o celular] --> F[Frontend Java GWT / PWA\nVercel]
+    U[Computador o celular] --> F[Frontend TypeScript / Vite / PWA\nVercel]
     F -->|HTTPS JSON| B[Backend Java 21 Spring Boot\nRailway]
     F <-->|WSS: chat, señalización y eventos| B
     B -->|JDBC y Flyway| D[(PostgreSQL\n64 tablas)]
@@ -13,7 +13,9 @@ flowchart LR
     F <-->|WebRTC audio y video| V[Otro navegador]
 ```
 
-La UI y sus eventos están escritos en `StreamGuardApp.java`. GWT compila Java al cliente web. HTML aporta la página inicial; CSS define la presentación; `media.js` encapsula APIs nativas de WebRTC, MediaRecorder, voz y reproducción. La comunicación de negocio con el backend está implementada en Java mediante `RequestBuilder`.
+La UI y sus eventos están escritos en `frontend/src/app.ts`. `api.ts` administra solicitudes con Fetch, sesiones y errores. `media.ts` encapsula WebRTC, MediaRecorder, voz y reproducción con tipos explícitos. `i18n.ts` importa el catálogo español y verifica las claves mediante TypeScript. HTML aporta la entrada y CSS define la presentación. Vite genera los archivos estáticos; el service worker también se escribe y compila desde TypeScript.
+
+El frontend usa TypeScript estricto, módulos de navegador y DOM nativo. `npm run build` verifica los tipos de la UI y del worker, valida los catálogos y compila con Vite. Maven construye únicamente el backend. La migración del cliente conserva los endpoints, tokens, permisos y las migraciones PostgreSQL existentes.
 
 El backend administra autenticación, autorización por canal, persistencia, moderación y flujos de IA. El frontend no consulta PostgreSQL ni llama a Gemini. Los archivos multimedia se guardan en un volumen y sus metadatos se relacionan en PostgreSQL.
 

@@ -1,11 +1,11 @@
 # Guion de sustentación
 
-La presentación editable está en `artifacts/StreamGuard-final-presentation.pptx`. El código de autoría está en `scripts/build-presentation.mjs`. El diseño sigue los colores de la aplicación. Las capturas proceden de las pruebas del producto, incluida una cámara sintética; no se presentan como transmisiones de una persona real.
+La presentación editable está en `artifacts/StreamGuard-typescript-presentation.pptx`. El código de autoría está en `scripts/build-presentation.mjs`. El diseño sigue los colores de la aplicación. Las capturas proceden de las pruebas del producto, incluida una cámara sintética; no se presentan como transmisiones de una persona real.
 
 ## Recorrido sugerido de 10 a 15 minutos
 
 1. Explica por qué un chat de streaming necesita reglas automáticas y revisión humana.
-2. Muestra la separación frontend/backend/base de datos/IA y el papel de Java GWT en Vercel.
+2. Muestra la separación frontend/backend/base de datos/IA y la compilación de TypeScript con Vite para Vercel.
 3. Describe el modelo relacional, verifica las 64 tablas y señala relaciones concretas del chat y de los clips.
 4. Recorre los cinco patrones en el código y vincula cada uno con una acción de la aplicación.
 5. Demuestra un directo con dos cuentas. Usa cámara sintética o una cámara propia con permisos.
@@ -17,7 +17,7 @@ La presentación editable está en `artifacts/StreamGuard-final-presentation.ppt
 
 ## Preguntas técnicas esperables
 
-**¿El frontend realmente usa Java?** Sí. La UI y los flujos se escriben en `StreamGuardApp.java`. GWT compila el código a JavaScript para que lo ejecute el navegador. HTML/CSS forman la presentación y un adaptador encapsula APIs de medios.
+**¿Qué lenguaje usa cada capa?** El frontend usa TypeScript estricto en `frontend/src/`, que Vite compila para el navegador. El backend usa Java 21 / Spring Boot. PostgreSQL conserva las 64 tablas y sus relaciones. Los cinco patrones principales se implementan en el backend Java.
 
 **¿Por qué no se llama a Gemini desde el frontend?** El backend conserva la clave, aplica permisos y registra/valida la respuesta antes de ejecutar una acción.
 

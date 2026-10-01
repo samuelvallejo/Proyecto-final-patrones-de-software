@@ -255,5 +255,8 @@
   "viewVideo": "Ver video",
   "viewerCountSuffix": " espectadores",
   "streamViewerCountSuffix": " espectadores</span></div><div class='stream-copy'><span class='category-text'>",
-  "moderatorSuffix": " · Moderador"
+  "moderatorSuffix": " · Moderador",
+  "liveNow": "TIEMPO REAL",
+  "activeSanctions": "Sanciones activas",
+  "shareFailed": "No se pudo compartir el clip. Revisa los permisos del navegador y vuelve a intentarlo."
 }

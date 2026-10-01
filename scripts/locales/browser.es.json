@@ -37,5 +37,6 @@
   "clipSavedPrefix": "Clip guardado.",
   "viewVideo": "Ver video",
   "publishClip": "Publicar",
-  "clipPublished": "Clip publicado"
+  "clipPublished": "Clip publicado",
+  "editedClipTitle": "Clip recortado desde TypeScript"
 }

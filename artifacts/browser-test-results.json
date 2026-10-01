@@ -1,15 +1,19 @@
 {
   "passed": true,
   "results": [
-    "Desktop loads the compiled Java UI",
-    "Registration, login and channel creation through Java forms",
+    "Desktop loads the compiled TypeScript UI",
+    "Registration, login and channel creation through TypeScript forms",
     "Synthetic camera and broadcaster signaling connect",
     "A second browser receives real WebRTC video",
     "Chat message is moderated, persisted and broadcast",
     "Restricted message stays private until human approval",
     "MediaRecorder captures an actual playable clip and creator publishes it",
+    "TypeScript clip editor trims video and requires a fresh approval",
+    "Clip download and shared public playback work without a session",
     "390px mobile layout has no horizontal overflow and menu navigation works",
-    "Ending the stream notifies viewers and releases media"
+    "Ending the stream notifies viewers and releases media",
+    "Assistant analysis and the native notification dialog work",
+    "Logout, login and session restoration retain the API contract"
   ],
   "errors": []
 }

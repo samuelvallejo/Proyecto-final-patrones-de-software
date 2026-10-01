@@ -1,4 +1,4 @@
-name: Java build and integration tests
+name: Java and TypeScript build and integration tests
 on:
   push:
   pull_request:
@@ -24,10 +24,15 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: node scripts/check-localization.mjs
       - run: mvn -B -ntp -pl backend verify
-      - run: mvn -B -ntp -pl frontend package
+      - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
           name: streamguard-web

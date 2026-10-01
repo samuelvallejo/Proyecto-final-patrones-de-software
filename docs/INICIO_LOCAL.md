@@ -1,6 +1,6 @@
 # Ejecutar StreamGuard localmente
 
-Necesitas **JDK 21**, **Node.js 20 o superior** y una base de datos **PostgreSQL 16 o superior**. Para crear y recortar clips necesitas `ffmpeg` y `ffprobe` en el PATH. En Windows puedes usar una compilación enlazada desde [FFmpeg](https://www.ffmpeg.org/download.html). `mvnw.cmd` y `mvnw` descargan Maven 3.9.9 dentro del proyecto si hace falta.
+Necesitas **JDK 21** para el backend, **Node.js 24 LTS** para el frontend TypeScript y una base de datos **PostgreSQL 16 o superior**. Para crear y recortar clips necesitas `ffmpeg` y `ffprobe` en el PATH. En Windows puedes usar una compilación enlazada desde [FFmpeg](https://www.ffmpeg.org/download.html). `mvnw.cmd` y `mvnw` descargan Maven 3.9.9 dentro del proyecto si hace falta.
 
 ## Opción A: PostgreSQL y backend con Docker
 
@@ -8,8 +8,9 @@ En la raíz del proyecto:
 
 ```powershell
 docker compose up --build -d
-.\mvnw.cmd -B -ntp -pl frontend package
-node scripts/serve-web.mjs
+npm ci
+npm run build
+npm run preview
 ```
 
 Abre [http://localhost:5173](http://localhost:5173). Docker instala FFmpeg en el contenedor del backend y mantiene PostgreSQL y archivos en volúmenes. Para usar Gemini, configura `GEMINI_API_KEY` en el entorno antes de levantar Compose y recrea el servicio backend.
@@ -33,8 +34,9 @@ java -jar backend/target/backend-1.0.0.jar
 3. En otra terminal, desde la misma raíz:
 
 ```powershell
-.\mvnw.cmd -B -ntp -pl frontend package
-node scripts/serve-web.mjs
+npm ci
+npm run build
+npm run preview
 ```
 
 4. Abre [http://localhost:5173](http://localhost:5173). Las migraciones crean las tablas automáticamente; no ejecutes el SQL manualmente sobre una base que Flyway ya administra.
@@ -47,6 +49,8 @@ $env:FFPROBE_BIN='C:\ruta\ffmpeg\bin\ffprobe.exe'
 ```
 
 ## Uso
+
+Para desarrollar con recarga automática, usa `npm run dev` en lugar de `npm run preview`; ambos usan el puerto 5173 y se ejecutan uno a la vez. El backend sigue en el puerto 8080. Para otra dirección, configura `PUBLIC_API_URL` antes de iniciar Vite o compilar. `npm run typecheck` comprueba los tipos sin generar archivos.
 
 1. Crea una cuenta y un canal desde **Mi estudio**.
 2. En **Configuración**, agrega una palabra restringida, por ejemplo `palabra-prueba`, y guarda.
@@ -75,8 +79,8 @@ Las pruebas ejecutan las migraciones reales, registros, permisos, decisiones de 
 Con el backend y el frontend iniciados, y Google Chrome instalado, ejecuta las pruebas de navegador desde una tercera terminal:
 
 ```powershell
-npm install
-node scripts/browser-test.cjs
+npm ci
+npm run test:e2e
 ```
 
 Se utiliza una cámara sintética. El informe se guarda en `artifacts/browser-test-results.json`; no se necesitan permisos para usar tu cámara real.

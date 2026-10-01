@@ -1,6 +1,6 @@
 # Trazabilidad del proyecto final
 
-Las imágenes adjuntas se tomaron como requisitos académicos y explicación de arquitectura. El caso de estudio y las preferencias de Java, PostgreSQL, Gemini, Vercel y Railway provienen de la solicitud del usuario.
+Las imágenes adjuntas se tomaron como requisitos académicos y explicación de arquitectura. El caso de estudio y las preferencias de PostgreSQL, Gemini, Vercel y Railway provienen de la solicitud del usuario. La solicitud posterior cambia el frontend a TypeScript y conserva Java en el backend.
 
 | Requisito | Evidencia entregada |
 |---|---|
@@ -8,9 +8,9 @@ Las imágenes adjuntas se tomaron como requisitos académicos y explicación de 
 | Implementar IA | Adaptador Gemini, clasificación de chat, asistencia editorial y registro de solicitudes/respuestas. Se activa configurando una clave válida. |
 | Cinco patrones | Builder, Factory Method, Abstract Factory, Adapter y Bridge, con uso real y documentación. |
 | Investigar otros patrones | Strategy, Observer/pub-sub y separación por capas en PATRONES.md. |
-| Frontend, backend y BD | Java GWT, Java Spring Boot y PostgreSQL. |
+| Frontend, backend y BD | TypeScript / Vite, Java Spring Boot y PostgreSQL. |
 | Java en backend | Código Java 21, JAR, Dockerfile y pruebas. |
-| Frontend en Java solicitado | Interfaz y flujos escritos en Java GWT; compilación a código de navegador. |
+| Frontend en TypeScript solicitado | Interfaz, comunicación HTTP, WebRTC, grabación y PWA en TypeScript estricto; compilación con Vite. |
 | Aplicación en computador y celular | PWA, manifiesto, service worker y estilos adaptables. |
 | Más de 45 tablas en PostgreSQL | 64 tablas de dominio verificadas mediante migraciones y prueba de integración. |
 | Presentación del caso | Material de sustentación y presentación incluidos en docs/artifacts. |

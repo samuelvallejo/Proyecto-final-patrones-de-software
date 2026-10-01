@@ -1,6 +1,6 @@
-# StreamGuard · Live, con confianza
+# StreamGuard · En vivo, con confianza
 
-Proyecto académico de streaming con frontend **escrito en Java (GWT)**, backend **Java 21 / Spring Boot**, PostgreSQL con **64 tablas de dominio**, y un adaptador real para la API de **Gemini**. Interfaz PWA adaptable a computador y celular. Configuración de despliegue: frontend en **Vercel**, backend y PostgreSQL en **Railway**.
+Proyecto académico de streaming con frontend **TypeScript estricto / Vite**, backend **Java 21 / Spring Boot**, PostgreSQL con **64 tablas de dominio**, y un adaptador real para la API de **Gemini**. Interfaz PWA en español adaptable a computador y celular. Configuración de despliegue: frontend en **Vercel**, backend y PostgreSQL en **Railway**.
 
 ## Comienza aquí
 
@@ -8,7 +8,7 @@ Proyecto académico de streaming con frontend **escrito en Java (GWT)**, backend
 2. Sigue [DESPLIEGUE.md](docs/DESPLIEGUE.md) para publicarla en tus cuentas.
 3. Consulta [PATRONES.md](docs/PATRONES.md) para sustentar los cinco patrones requeridos.
 4. Consulta [BASE_DE_DATOS.md](docs/BASE_DE_DATOS.md), [ARQUITECTURA.md](docs/ARQUITECTURA.md) y [REQUISITOS.md](docs/REQUISITOS.md).
-5. Revisa [PRUEBAS.md](docs/PRUEBAS.md) y la [presentación editable](artifacts/StreamGuard-final-presentation.pptx), con su [guion de sustentación](docs/SUSTENTACION.md).
+5. Revisa [PRUEBAS.md](docs/PRUEBAS.md) y la [presentación editable](artifacts/StreamGuard-typescript-presentation.pptx), con su [guion de sustentación](docs/SUSTENTACION.md).
 6. Consulta [IDIOMAS.md](docs/IDIOMAS.md): código en inglés y textos de la aplicación en recursos de español.
 
 ## Funciones implementadas
@@ -38,8 +38,10 @@ Proyecto académico de streaming con frontend **escrito en Java (GWT)**, backend
 ```text
 backend/                     API Java, seguridad, WebSocket, IA y pruebas
   src/main/resources/db/     Migraciones PostgreSQL V1 y V2
-frontend/src/main/java/      Aplicación Java GWT y adaptador de navegador
-frontend/src/main/webapp/    HTML, CSS, PWA y APIs nativas de medios
+frontend/src/                Interfaz, API, WebRTC y PWA en TypeScript
+frontend/public/             Catálogo en español, iconos y manifest
+frontend/index.html          Entrada HTML compilada por Vite
+frontend/tsconfig*.json      Tipado estricto de interfaz y service worker
 scripts/                    Compilación, servidor local y pruebas de navegador
 docs/                       Guías, arquitectura, requisitos y sustentación
 Dockerfile                  Backend Java y FFmpeg para Railway
@@ -61,4 +63,4 @@ El modelo incluye tablas para futuras extensiones (suscripciones, insignias, emo
 
 ## Referencias oficiales
 
-GWT permite escribir el cliente en Java y compilarlo a JavaScript que se ejecuta en navegadores, incluidos móviles: [GWT](https://www.gwtproject.org/overview.html). Los archivos generados se sirven como un frontend estático en Vercel: [configuración de compilaciones](https://vercel.com/docs/builds/configure-a-build). Railway permite desplegar Spring Boot mediante Docker: [guía oficial](https://docs.railway.com/guides/spring-boot). La clave de Gemini se usa exclusivamente desde el backend: [claves de API](https://ai.google.dev/gemini-api/docs/api-key).
+Vite compila TypeScript y prepara los archivos estáticos para el navegador: [Vite](https://vite.dev/guide/). El proyecto comprueba tipos antes de compilar: [TypeScript estricto](https://www.typescriptlang.org/tsconfig/strict.html). Vercel sirve la salida `frontend/dist`: [configuración de compilaciones](https://vercel.com/docs/builds/configure-a-build). Railway despliega Spring Boot mediante Docker: [guía oficial](https://docs.railway.com/guides/spring-boot). La clave de Gemini se usa exclusivamente desde el backend: [claves de API](https://ai.google.dev/gemini-api/docs/api-key).
