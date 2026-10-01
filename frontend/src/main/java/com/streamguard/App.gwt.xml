@@ -1,0 +1,1 @@
+<module rename-to="streamguard"><inherits name="com.google.gwt.user.User"/><inherits name="com.google.gwt.json.JSON"/><inherits name="com.google.gwt.http.HTTP"/><entry-point class="com.streamguard.client.StreamGuardApp"/><source path="client"/><set-property name="user.agent" value="safari"/></module>

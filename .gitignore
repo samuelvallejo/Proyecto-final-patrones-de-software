@@ -1,0 +1,15 @@
+.tools/
+.local/
+**/target/
+frontend/dist/
+**/gwt-unitCache/
+.vercel/
+.env
+.env.*
+!.env.example
+*.log
+node_modules/
+artifacts/test-media/
+artifacts/browser-failure.png
+artifacts/*.jar
+artifacts/*.zip

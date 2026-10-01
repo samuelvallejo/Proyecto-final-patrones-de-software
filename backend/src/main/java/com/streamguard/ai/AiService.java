@@ -1,0 +1,137 @@
+package com.streamguard.ai;
+
+import com.fasterxml.jackson.databind.*;
+import com.streamguard.core.*;
+import com.streamguard.patterns.*;
+import com.streamguard.patterns.AiToolkitFactory.Verdict;
+import java.util.*;
+import java.util.concurrent.Semaphore;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AiService {
+  private final Db db;
+  private final GeminiAdapter gemini;
+  private final ObjectMapper json;
+  private final Semaphore slots = new Semaphore(6);
+
+  public record Analysis(UUID requestId, Verdict verdict) {}
+
+  public record Editorial(UUID requestId, JsonNode output, String provider) {}
+
+  public AiService(Db db, GeminiAdapter gemini, ObjectMapper json) {
+    this.db = db;
+    this.gemini = gemini;
+    this.json = json;
+  }
+
+  public boolean configured() {
+    return gemini.configured();
+  }
+
+  private AiToolkitFactory toolkit() {
+    return configured()
+        ? new AiToolkitFactory.GeminiToolkit(gemini, json)
+        : new AiToolkitFactory.LocalToolkit(json);
+  }
+
+  private UUID request(UUID stream, String task, Object input) {
+    return db.insert(
+        "INSERT INTO ai_requests(stream_id,model_name,task,input) VALUES (?,?,?,?::jsonb) RETURNING"
+            + " id",
+        stream,
+        configured() ? gemini.model() : "local-rules",
+        task,
+        serialize(input));
+  }
+
+  private String serialize(Object v) {
+    try {
+      return json.writeValueAsString(v);
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  private void response(UUID request, Object output, long start, String status) {
+    db.exec(
+        "INSERT INTO ai_responses(request_id,output,latency_ms) VALUES (?,?::jsonb,?)",
+        request,
+        serialize(output),
+        (int) Math.min(Integer.MAX_VALUE, System.currentTimeMillis() - start));
+    db.exec("UPDATE ai_requests SET status=? WHERE id=?", status, request);
+  }
+
+  public Analysis moderate(UUID stream, String text, ModerationPolicy policy) {
+    UUID id = request(stream, "MODERATION", Map.of("message", text, "level", policy.level()));
+    long start = System.currentTimeMillis();
+    // Local restrictions remain authoritative and save an unnecessary provider request.
+    Verdict local = new AiToolkitFactory.LocalToolkit(json).moderation().analyze(text, policy);
+    if (!local.category().equals("SAFE")) {
+      response(id, local, start, "LOCAL");
+      return new Analysis(id, local);
+    }
+    boolean acquired = slots.tryAcquire();
+    try {
+      if (!acquired) throw new IllegalStateException("IA ocupada");
+      Verdict result = toolkit().moderation().analyze(text, policy);
+      response(id, result, start, configured() ? "SUCCEEDED" : "LOCAL");
+      return new Analysis(id, result);
+    } catch (Exception e) {
+      Verdict result =
+          new Verdict(
+              "UNCERTAIN",
+              .6,
+              "Gemini no respondió o la respuesta fue inválida; requiere revisión humana",
+              "UNAVAILABLE");
+      response(id, result, start, "FAILED");
+      return new Analysis(id, result);
+    } finally {
+      if (acquired) slots.release();
+    }
+  }
+
+  public Editorial editorial(UUID stream, JsonNode input) {
+    UUID id = request(stream, "EDITORIAL", input);
+    long start = System.currentTimeMillis();
+    boolean acquired = slots.tryAcquire();
+    try {
+      if (!acquired) throw new IllegalStateException("IA ocupada");
+      var factory = toolkit();
+      JsonNode result = factory.editorial().compose(input);
+      response(id, result, start, configured() ? "SUCCEEDED" : "LOCAL");
+      return new Editorial(id, result, factory.provider());
+    } catch (Exception e) {
+      var result = new AiToolkitFactory.LocalToolkit(json).editorial().compose(input);
+      ((com.fasterxml.jackson.databind.node.ObjectNode) result)
+          .put("summary", "Gemini no está disponible. Intenta generar el análisis nuevamente.");
+      response(id, result, start, "FAILED");
+      return new Editorial(id, result, "UNAVAILABLE");
+    } finally {
+      if (acquired) slots.release();
+    }
+  }
+
+  public JsonNode context(UUID stream) {
+    return json.valueToTree(
+        Map.of(
+            "title",
+            db.one("SELECT title FROM streams WHERE id=?", stream).get("title"),
+            "messages",
+            db.list(
+                "SELECT m.content FROM chat_messages m JOIN chat_rooms r ON r.id=m.room_id WHERE"
+                    + " r.stream_id=? AND m.status='VISIBLE' ORDER BY m.created_at DESC LIMIT 150",
+                stream),
+            "highlights",
+            db.list(
+                "SELECT at_seconds,reason,source FROM stream_highlights WHERE stream_id=? ORDER BY"
+                    + " at_seconds DESC LIMIT 20",
+                stream),
+            "transcript",
+            db.list(
+                "SELECT c.text,c.start_seconds FROM subtitle_cues c JOIN transcripts t ON"
+                    + " t.id=c.transcript_id WHERE t.stream_id=? ORDER BY c.start_seconds DESC"
+                    + " LIMIT 100",
+                stream)));
+  }
+}

@@ -1,0 +1,37 @@
+name: Java build and integration tests
+on:
+  push:
+  pull_request:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: streamguard_test
+          POSTGRES_USER: streamguard
+          POSTGRES_PASSWORD: streamguard
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U streamguard -d streamguard_test"
+          --health-interval 5s --health-timeout 5s --health-retries 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: mvn -B -ntp -pl backend verify
+      - run: mvn -B -ntp -pl frontend package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: streamguard-web
+          path: frontend/dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: streamguard-backend
+          path: backend/target/backend-1.0.0.jar

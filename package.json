@@ -1,0 +1,1 @@
+{"name":"streamguard-qa","private":true,"scripts":{"build":"node scripts/build-web.mjs","preview":"node scripts/serve-web.mjs","test:e2e":"node scripts/browser-test.cjs"},"devDependencies":{"playwright":"1.62.1"}}

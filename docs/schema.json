@@ -1,0 +1,326 @@
+{
+  "tables": 64,
+  "foreignKeys": 101,
+  "catalog": [
+    {
+      "name": "users",
+      "purpose": "Identidad, correo, credenciales y estado de la cuenta",
+      "scope": "operational"
+    },
+    {
+      "name": "user_profiles",
+      "purpose": "Nombre público, biografía e idioma",
+      "scope": "operational"
+    },
+    {
+      "name": "roles",
+      "purpose": "Catálogo de roles globales",
+      "scope": "catalog"
+    },
+    {
+      "name": "user_roles",
+      "purpose": "Roles asociados a cada usuario",
+      "scope": "operational"
+    },
+    {
+      "name": "auth_sessions",
+      "purpose": "Hash de tokens y vencimiento de sesiones",
+      "scope": "operational"
+    },
+    {
+      "name": "user_devices",
+      "purpose": "Inventario futuro de dispositivos",
+      "scope": "extension"
+    },
+    {
+      "name": "user_consents",
+      "purpose": "Consentimiento versionado para el análisis del chat",
+      "scope": "operational"
+    },
+    {
+      "name": "channels",
+      "purpose": "Canales y propiedad de cada comunidad",
+      "scope": "operational"
+    },
+    {
+      "name": "channel_settings",
+      "purpose": "Modo lento, enlaces, idioma y clips automáticos",
+      "scope": "operational"
+    },
+    {
+      "name": "channel_moderators",
+      "purpose": "Permisos de moderación específicos por canal",
+      "scope": "operational"
+    },
+    {
+      "name": "channel_follows",
+      "purpose": "Seguimiento de canales por usuarios",
+      "scope": "operational"
+    },
+    {
+      "name": "categories",
+      "purpose": "Categorías de transmisiones",
+      "scope": "catalog"
+    },
+    {
+      "name": "tags",
+      "purpose": "Etiquetas reutilizables para contenido",
+      "scope": "extension"
+    },
+    {
+      "name": "streams",
+      "purpose": "Título, categoría, inicio, fin y estado del directo",
+      "scope": "operational"
+    },
+    {
+      "name": "stream_tags",
+      "purpose": "Etiquetas asociadas a transmisiones",
+      "scope": "extension"
+    },
+    {
+      "name": "stream_viewer_sessions",
+      "purpose": "Ingreso y salida de espectadores conectados",
+      "scope": "operational"
+    },
+    {
+      "name": "stream_events",
+      "purpose": "Acontecimientos del directo con payload JSONB",
+      "scope": "operational"
+    },
+    {
+      "name": "chat_rooms",
+      "purpose": "Sala única para cada transmisión",
+      "scope": "operational"
+    },
+    {
+      "name": "chat_messages",
+      "purpose": "Mensajes persistentes y estado de moderación",
+      "scope": "operational"
+    },
+    {
+      "name": "message_reactions",
+      "purpose": "Reacciones a mensajes individuales",
+      "scope": "extension"
+    },
+    {
+      "name": "message_reports",
+      "purpose": "Reportes realizados por espectadores",
+      "scope": "extension"
+    },
+    {
+      "name": "moderation_policies",
+      "purpose": "Niveles, umbrales y medidas automáticas",
+      "scope": "operational"
+    },
+    {
+      "name": "blocked_words",
+      "purpose": "Restricciones explícitas de palabras por canal",
+      "scope": "operational"
+    },
+    {
+      "name": "blocked_topics",
+      "purpose": "Temas enviados como contexto a Gemini",
+      "scope": "operational"
+    },
+    {
+      "name": "moderation_rules",
+      "purpose": "Extensión para acciones específicas por categoría",
+      "scope": "extension"
+    },
+    {
+      "name": "ai_providers",
+      "purpose": "Catálogo de proveedores de IA",
+      "scope": "catalog"
+    },
+    {
+      "name": "ai_models",
+      "purpose": "Catálogo de modelos y capacidades",
+      "scope": "catalog"
+    },
+    {
+      "name": "ai_requests",
+      "purpose": "Tarea, entrada JSONB, modelo solicitado y estado",
+      "scope": "operational"
+    },
+    {
+      "name": "ai_responses",
+      "purpose": "Respuesta estructurada y latencia de cada solicitud",
+      "scope": "operational"
+    },
+    {
+      "name": "message_classifications",
+      "purpose": "Categoría, riesgo, razón y proveedor por mensaje",
+      "scope": "operational"
+    },
+    {
+      "name": "moderation_queue",
+      "purpose": "Casos pendientes y decisión del revisor humano",
+      "scope": "operational"
+    },
+    {
+      "name": "moderation_actions",
+      "purpose": "Historial de medidas y actor humano o automático",
+      "scope": "operational"
+    },
+    {
+      "name": "user_sanctions",
+      "purpose": "Silencios/bloqueos por canal con expiración y revocación",
+      "scope": "operational"
+    },
+    {
+      "name": "sanction_appeals",
+      "purpose": "Extensión para apelaciones de sanciones",
+      "scope": "extension"
+    },
+    {
+      "name": "user_warnings",
+      "purpose": "Advertencias resultantes de moderación automática",
+      "scope": "operational"
+    },
+    {
+      "name": "media_assets",
+      "purpose": "Metadatos de archivos reales en el volumen persistente",
+      "scope": "operational"
+    },
+    {
+      "name": "recording_segments",
+      "purpose": "Intervalos de grabación asociados a archivos",
+      "scope": "operational"
+    },
+    {
+      "name": "stream_highlights",
+      "purpose": "Marcadores manuales, aumentos del chat y audio",
+      "scope": "operational"
+    },
+    {
+      "name": "clips",
+      "purpose": "Clip, video, intervalo, metadatos y estado de publicación",
+      "scope": "operational"
+    },
+    {
+      "name": "clip_versions",
+      "purpose": "Historial previo a ediciones y recortes",
+      "scope": "operational"
+    },
+    {
+      "name": "clip_tags",
+      "purpose": "Etiquetas asignadas a clips",
+      "scope": "extension"
+    },
+    {
+      "name": "clip_reviews",
+      "purpose": "Decisiones del propietario sobre publicación",
+      "scope": "operational"
+    },
+    {
+      "name": "clip_exports",
+      "purpose": "Extensión para trabajos de exportación por formato",
+      "scope": "extension"
+    },
+    {
+      "name": "clip_shares",
+      "purpose": "Extensión para registrar destinos compartidos",
+      "scope": "extension"
+    },
+    {
+      "name": "stream_summaries",
+      "purpose": "Resúmenes vinculados a su solicitud de IA",
+      "scope": "operational"
+    },
+    {
+      "name": "stream_topics",
+      "purpose": "Temas identificados en el contexto del directo",
+      "scope": "operational"
+    },
+    {
+      "name": "transcripts",
+      "purpose": "Transcripciones y su origen",
+      "scope": "operational"
+    },
+    {
+      "name": "subtitle_cues",
+      "purpose": "Fragmentos de texto con tiempos de inicio y fin",
+      "scope": "operational"
+    },
+    {
+      "name": "chat_faqs",
+      "purpose": "Preguntas y respuestas identificadas por el asistente",
+      "scope": "operational"
+    },
+    {
+      "name": "stream_analytics",
+      "purpose": "Muestras por minuto de audiencia y moderación",
+      "scope": "operational"
+    },
+    {
+      "name": "audience_reactions",
+      "purpose": "Extensión para reacciones de audiencia al directo",
+      "scope": "extension"
+    },
+    {
+      "name": "notifications",
+      "purpose": "Avisos privados de moderación y clips",
+      "scope": "operational"
+    },
+    {
+      "name": "notification_preferences",
+      "purpose": "Preferencias inicializadas para futuras entregas configurables",
+      "scope": "operational"
+    },
+    {
+      "name": "audit_logs",
+      "purpose": "Auditoría de configuración del canal",
+      "scope": "operational"
+    },
+    {
+      "name": "channel_webhooks",
+      "purpose": "Extensión para integraciones externas por evento",
+      "scope": "extension"
+    },
+    {
+      "name": "webhook_deliveries",
+      "purpose": "Extensión para intentos y estado de entregas",
+      "scope": "extension"
+    },
+    {
+      "name": "subscription_plans",
+      "purpose": "Catálogo de planes de comunidad",
+      "scope": "catalog"
+    },
+    {
+      "name": "channel_subscriptions",
+      "purpose": "Extensión para suscripciones de usuarios a canales",
+      "scope": "extension"
+    },
+    {
+      "name": "badges",
+      "purpose": "Catálogo de insignias",
+      "scope": "catalog"
+    },
+    {
+      "name": "user_badges",
+      "purpose": "Extensión para asignación de insignias",
+      "scope": "extension"
+    },
+    {
+      "name": "emotes",
+      "purpose": "Extensión para recursos y códigos de emotes",
+      "scope": "extension"
+    },
+    {
+      "name": "channel_emotes",
+      "purpose": "Extensión para emotes disponibles por canal",
+      "scope": "extension"
+    },
+    {
+      "name": "playlists",
+      "purpose": "Extensión para listas públicas o privadas del canal",
+      "scope": "extension"
+    },
+    {
+      "name": "playlist_items",
+      "purpose": "Extensión para clips ordenados dentro de listas",
+      "scope": "extension"
+    }
+  ]
+}

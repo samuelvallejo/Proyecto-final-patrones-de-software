@@ -1,0 +1,9 @@
+.git
+.tools
+.local
+frontend
+artifacts
+docs
+**/target
+node_modules
+.env*

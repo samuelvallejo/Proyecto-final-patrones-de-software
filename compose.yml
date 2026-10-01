@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: streamguard
+      POSTGRES_USER: streamguard
+      POSTGRES_PASSWORD: ${PGPASSWORD:-streamguard}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U streamguard -d streamguard"]
+      interval: 5s
+      retries: 15
+  backend:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      JDBC_DATABASE_URL: jdbc:postgresql://postgres:5432/streamguard
+      PGUSER: streamguard
+      PGPASSWORD: ${PGPASSWORD:-streamguard}
+      FRONTEND_ORIGIN: http://localhost:5173
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "8080:8080"
+    volumes:
+      - media-data:/data
+volumes:
+  postgres-data:
+  media-data:

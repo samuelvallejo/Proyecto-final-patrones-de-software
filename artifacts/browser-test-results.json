@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "results": [
+    "Desktop loads the compiled Java UI",
+    "Registration, login and channel creation through Java forms",
+    "Synthetic camera and broadcaster signaling connect",
+    "A second browser receives real WebRTC video",
+    "Chat message is moderated, persisted and broadcast",
+    "Restricted message stays private until human approval",
+    "MediaRecorder captures an actual playable clip and creator publishes it",
+    "390px mobile layout has no horizontal overflow and menu navigation works",
+    "Ending the stream notifies viewers and releases media"
+  ],
+  "errors": []
+}
