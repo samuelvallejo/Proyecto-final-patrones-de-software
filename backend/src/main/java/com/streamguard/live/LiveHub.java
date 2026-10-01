@@ -3,6 +3,7 @@ package com.streamguard.live;
 import com.fasterxml.jackson.databind.*;
 import com.streamguard.auth.AuthService;
 import com.streamguard.core.*;
+import com.streamguard.i18n.Messages;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,18 +55,21 @@ public class LiveHub extends TextWebSocketHandler {
       var data = json.readTree(message.getPayload());
       String type = data.path("type").asText();
       if (type.equals("join")) {
-        if (peers.containsKey(socket.getId())) throw new ApiError(409, "Ya estás conectado");
+        if (peers.containsKey(socket.getId()))
+          throw new ApiError(409, Messages.text("liveHubHandleTextMessageText01"));
         UUID stream = UUID.fromString(data.path("streamId").asText());
         var row =
             db.one(
                 "SELECT s.status,c.id AS channel_id,c.owner_id FROM streams s JOIN channels c ON"
                     + " c.id=s.channel_id WHERE s.id=?",
                 stream);
-        if (!row.get("status").equals("LIVE")) throw new ApiError(409, "La transmisión terminó");
+        if (!row.get("status").equals("LIVE"))
+          throw new ApiError(409, Messages.text("clipServiceHighlightText01"));
         UUID user = auth.resolve(data.path("token").asText(null));
         boolean host = data.path("host").asBoolean(false);
         boolean owner = Objects.equals(user, row.get("owner_id"));
-        if (host && !owner) throw new ApiError(403, "Solo el creador puede transmitir");
+        if (host && !owner)
+          throw new ApiError(403, Messages.text("liveHubHandleTextMessageText03"));
         boolean moderator =
             owner
                 || (user != null
@@ -76,9 +80,10 @@ public class LiveHub extends TextWebSocketHandler {
                             user)
                         > 0);
         Room room = rooms.computeIfAbsent(stream, k -> new Room());
-        if (host && room.host != null) throw new ApiError(409, "Ya hay un emisor conectado");
+        if (host && room.host != null)
+          throw new ApiError(409, Messages.text("liveHubHandleTextMessageText04"));
         if (!host && room.viewers.size() >= maxViewers)
-          throw new ApiError(429, "La sala alcanzó el límite de espectadores de esta versión");
+          throw new ApiError(429, Messages.text("liveHubHandleTextMessageText05"));
         var wrapped = new ConcurrentWebSocketSessionDecorator(socket, 10000, 256 * 1024);
         UUID view =
             host
@@ -120,13 +125,14 @@ public class LiveHub extends TextWebSocketHandler {
                 room.host != null));
       } else {
         Peer sender = peers.get(socket.getId());
-        if (sender == null) throw new ApiError(401, "Primero ingresa a una sala");
+        if (sender == null)
+          throw new ApiError(401, Messages.text("liveHubHandleTextMessageText06"));
         if (type.equals("signal")) {
           Peer target = peers.get(data.path("to").asText());
           if (target == null
               || !target.stream().equals(sender.stream())
               || sender.host() == target.host())
-            throw new ApiError(403, "Destino de señal inválido");
+            throw new ApiError(403, Messages.text("liveHubHandleTextMessageText07"));
           send(
               target.socket(),
               Map.of("type", "signal", "from", socket.getId(), "payload", data.path("payload")));
@@ -140,7 +146,9 @@ public class LiveHub extends TextWebSocketHandler {
               "type",
               "error",
               "message",
-              e instanceof ApiError ? e.getMessage() : "No se pudo procesar el evento"));
+              e instanceof ApiError
+                  ? e.getMessage()
+                  : Messages.text("liveHubHandleTextMessageText08")));
     }
   }
 
@@ -159,7 +167,8 @@ public class LiveHub extends TextWebSocketHandler {
           "UPDATE streams SET status='ENDED',ended_at=now() WHERE id=? AND status='LIVE'",
           peer.stream());
       broadcast(
-          peer.stream(), Map.of("type", "ended", "message", "El creador finalizó la transmisión"));
+          peer.stream(),
+          Map.of("type", "ended", "message", Messages.text("liveHubAfterConnectionClosedText09")));
     } else if (room.host != null && peers.containsKey(room.host))
       send(peers.get(room.host).socket(), Map.of("type", "viewer-left", "peerId", socket.getId()));
     broadcast(

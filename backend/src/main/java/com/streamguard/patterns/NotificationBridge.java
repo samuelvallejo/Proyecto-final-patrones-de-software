@@ -1,6 +1,7 @@
 package com.streamguard.patterns;
 
 import com.streamguard.core.Db;
+import com.streamguard.i18n.Messages;
 import com.streamguard.live.LiveHub;
 import java.util.*;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,8 @@ public final class NotificationBridge {
     }
 
     public void send(UUID recipient, String body) {
-      delivery.deliver(recipient, "MODERATION", "Aviso de moderación", body);
+      delivery.deliver(
+          recipient, "MODERATION", Messages.text("notificationBridgeSendText01"), body);
     }
   }
 
@@ -37,7 +39,7 @@ public final class NotificationBridge {
     }
 
     public void send(UUID recipient, String body) {
-      delivery.deliver(recipient, "CLIP", "Nuevo clip para revisar", body);
+      delivery.deliver(recipient, "CLIP", Messages.text("notificationBridgeSendText02"), body);
     }
   }
 

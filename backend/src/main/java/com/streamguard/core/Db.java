@@ -1,5 +1,6 @@
 package com.streamguard.core;
 
+import com.streamguard.i18n.Messages;
 import java.util.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -26,7 +27,7 @@ public class Db {
 
   public Map<String, Object> one(String sql, Object... args) {
     var rows = list(sql, args);
-    if (rows.isEmpty()) throw new ApiError(404, "No se encontró el recurso");
+    if (rows.isEmpty()) throw new ApiError(404, Messages.text("dbOneText01"));
     return rows.getFirst();
   }
 

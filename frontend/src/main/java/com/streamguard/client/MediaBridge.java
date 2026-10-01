@@ -28,7 +28,7 @@ public final class MediaBridge {
   public static native void prepare(
       boolean screen,
       Result
-          callback) /*-{ $wnd.StreamMedia.prepare(screen).then($entry(function(){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)("");}))["catch"]($entry(function(e){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)(e.message || "No se pudo acceder a cámara y micrófono");})); }-*/;
+          callback) /*-{ $wnd.StreamMedia.prepare(screen).then($entry(function(){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)("");}))["catch"]($entry(function(e){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)($wnd.StreamMedia.messageForError(e));})); }-*/;
 
   public static native void connect(
       String stream,
@@ -42,14 +42,14 @@ public final class MediaBridge {
 
   public static native void captions(
       Result
-          callback) /*-{ $wnd.StreamMedia.captions().then($entry(function(){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)("");}))["catch"]($entry(function(e){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)(e.message);})); }-*/;
+          callback) /*-{ $wnd.StreamMedia.captions().then($entry(function(){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)("");}))["catch"]($entry(function(e){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)($wnd.StreamMedia.messageForError(e));})); }-*/;
 
   public static native void playback(
       String asset,
       String element,
       boolean download,
       Result
-          callback) /*-{ $wnd.StreamMedia.playback(asset,element,download).then($entry(function(){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)("");}))["catch"]($entry(function(e){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)(e.message);})); }-*/;
+          callback) /*-{ $wnd.StreamMedia.playback(asset,element,download).then($entry(function(){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)("");}))["catch"]($entry(function(e){callback.@com.streamguard.client.MediaBridge.Result::done(Ljava/lang/String;)($wnd.StreamMedia.messageForError(e));})); }-*/;
 
   public static native void share(
       String asset,

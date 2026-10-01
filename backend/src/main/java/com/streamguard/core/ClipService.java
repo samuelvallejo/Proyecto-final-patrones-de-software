@@ -2,6 +2,7 @@ package com.streamguard.core;
 
 import com.fasterxml.jackson.databind.*;
 import com.streamguard.ai.AiService;
+import com.streamguard.i18n.Messages;
 import com.streamguard.live.LiveHub;
 import com.streamguard.patterns.NotificationBridge;
 import java.util.*;
@@ -38,20 +39,21 @@ public class ClipService {
     var row = platform.stream(stream);
     UUID channel = Db.id(row.get("channel_id"));
     platform.owner(channel, actor);
-    if (!row.get("status").equals("LIVE")) throw new ApiError(409, "La transmisión terminó");
+    if (!row.get("status").equals("LIVE"))
+      throw new ApiError(409, Messages.text("clipServiceHighlightText01"));
     db.one("SELECT id FROM streams WHERE id=? FOR UPDATE", stream);
     int cooldown = source.equals("MANUAL") ? 5 : 45;
     if (!source.equals("MANUAL")
         && !(boolean)
             db.one("SELECT auto_clips FROM channel_settings WHERE channel_id=?", channel)
                 .get("auto_clips"))
-      throw new ApiError(409, "Los clips automáticos están desactivados");
+      throw new ApiError(409, Messages.text("clipServiceHighlightText02"));
     if (db.count(
             "SELECT count(*) FROM stream_highlights WHERE stream_id=? AND"
                 + " created_at>now()-make_interval(secs => ?)",
             stream,
             cooldown)
-        > 0) throw new ApiError(429, "Ya se marcó un momento recientemente");
+        > 0) throw new ApiError(429, Messages.text("clipServiceHighlightText03"));
     UUID id =
         db.insert(
             "INSERT INTO stream_highlights(stream_id,marked_by,source,at_seconds,reason) SELECT"
@@ -71,9 +73,9 @@ public class ClipService {
     platform.owner(Db.id(s.get("channel_id")), actor);
     db.one("SELECT id FROM stream_highlights WHERE id=? AND stream_id=?", highlight, stream);
     if (start < 0 || end <= start || end - start > 65)
-      throw new ApiError(400, "Intervalo de grabación inválido");
+      throw new ApiError(400, Messages.text("clipServiceUploadText04"));
     if (db.count("SELECT count(*) FROM clips WHERE highlight_id=?", highlight) > 0)
-      throw new ApiError(409, "Este momento ya tiene un clip");
+      throw new ApiError(409, Messages.text("clipServiceUploadText05"));
     var saved = media.save(actor, file);
     int duration = Math.max(1, (int) Math.ceil(saved.duration()));
     int actualEnd = start + duration;
@@ -93,12 +95,12 @@ public class ClipService {
             stream,
             highlight,
             saved.asset(),
-            editorial.output().path("title").asText("Momento del directo"),
+            editorial.output().path("title").asText(Messages.text("clipServiceUploadText06")),
             editorial.output().path("description").asText(""),
             start,
             actualEnd);
     new NotificationBridge.ClipNotice(delivery)
-        .send(actor, "El clip está listo para que lo revises antes de publicarlo.");
+        .send(actor, Messages.text("clipServiceUploadText07"));
     hub.toModerators(stream, Map.of("type", "clips-updated"));
     return db.one("SELECT * FROM clips WHERE id=?", clip);
   }
@@ -111,7 +113,8 @@ public class ClipService {
                 + " FOR UPDATE OF c",
             clip);
     platform.owner(Db.id(row.get("channel_id")), actor);
-    if (row.get("asset_id") == null) throw new ApiError(409, "El clip todavía no tiene video");
+    if (row.get("asset_id") == null)
+      throw new ApiError(409, Messages.text("clipServiceReviewText08"));
     db.exec("UPDATE clips SET status=? WHERE id=?", approve ? "APPROVED" : "REJECTED", clip);
     db.exec(
         "INSERT INTO clip_reviews(clip_id,reviewer_id,decision) VALUES (?,?,?)",
@@ -135,8 +138,7 @@ public class ClipService {
         || !Double.isFinite(end)
         || start < 0
         || end <= start
-        || end > duration + .1)
-      throw new ApiError(400, "El recorte está fuera de la duración del clip");
+        || end > duration + .1) throw new ApiError(400, Messages.text("clipServiceEditText09"));
     UUID asset = Db.id(row.get("asset_id"));
     int absoluteStart = ((Number) row.get("start_seconds")).intValue();
     if (start > .1 || end < duration - .1)
@@ -204,7 +206,8 @@ public class ClipService {
   public void subtitle(UUID stream, UUID actor, double start, double end, String text) {
     var s = platform.stream(stream);
     platform.owner(Db.id(s.get("channel_id")), actor);
-    if (!s.get("status").equals("LIVE")) throw new ApiError(409, "La transmisión terminó");
+    if (!s.get("status").equals("LIVE"))
+      throw new ApiError(409, Messages.text("clipServiceHighlightText01"));
     UUID transcript =
         db.optional(
                 "SELECT id FROM transcripts WHERE stream_id=? AND source='BROWSER' LIMIT 1", stream)

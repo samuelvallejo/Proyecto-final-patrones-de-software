@@ -1,5 +1,6 @@
 package com.streamguard.auth;
 
+import com.streamguard.i18n.Messages;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import java.io.IOException;
@@ -52,8 +53,9 @@ public class SecurityConfig {
                 c.authenticationEntryPoint(
                     (req, res, e) -> {
                       res.setStatus(401);
+                      res.setCharacterEncoding("UTF-8");
                       res.setContentType("application/json");
-                      res.getWriter().write("{\"error\":\"Inicia sesión para continuar\"}");
+                      res.getWriter().write(Messages.text("securityConfigMessageText01"));
                     }))
         .addFilterBefore(
             new OncePerRequestFilter() {

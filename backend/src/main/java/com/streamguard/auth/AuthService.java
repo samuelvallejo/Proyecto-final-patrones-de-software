@@ -1,6 +1,7 @@
 package com.streamguard.auth;
 
 import com.streamguard.core.*;
+import com.streamguard.i18n.Messages;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.*;
@@ -41,14 +42,14 @@ public class AuthService {
   public static UUID current() {
     var a = SecurityContextHolder.getContext().getAuthentication();
     if (a == null || !(a.getPrincipal() instanceof UUID id))
-      throw new ApiError(401, "Inicia sesión para continuar");
+      throw new ApiError(401, Messages.text("authServiceCurrentText01"));
     return id;
   }
 
   @Transactional
   public Map<String, Object> register(String username, String email, String password) {
     if (password.getBytes(StandardCharsets.UTF_8).length > 72)
-      throw new ApiError(400, "La contraseña supera el límite de 72 bytes UTF-8");
+      throw new ApiError(400, Messages.text("authServiceRegisterText02"));
     var id =
         db.insert(
             "INSERT INTO users(username,email,password_hash) VALUES (?,?,?) RETURNING id",
@@ -67,13 +68,13 @@ public class AuthService {
 
   public Map<String, Object> login(String email, String password) {
     if (password.getBytes(StandardCharsets.UTF_8).length > 72)
-      throw new ApiError(401, "Correo o contraseña incorrectos");
+      throw new ApiError(401, Messages.text("authServiceLoginText03"));
     var user =
         db.optional(
             "SELECT * FROM users WHERE email=? AND status='ACTIVE'",
             email.toLowerCase(Locale.ROOT));
     if (user.isEmpty() || !encoder.matches(password, user.get().get("password_hash").toString()))
-      throw new ApiError(401, "Correo o contraseña incorrectos");
+      throw new ApiError(401, Messages.text("authServiceLoginText03"));
     return session(Db.id(user.get().get("id")));
   }
 

@@ -2,6 +2,7 @@ package com.streamguard.core;
 
 import com.streamguard.ai.AiService;
 import com.streamguard.auth.AuthService;
+import com.streamguard.i18n.Messages;
 import com.streamguard.patterns.ModerationPolicy;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -311,7 +312,8 @@ public class PlatformController {
     if (!Double.isFinite(s.start())
         || !Double.isFinite(s.end())
         || s.end() <= s.start()
-        || s.end() - s.start() > 60) throw new ApiError(400, "Intervalo de subtítulo inválido");
+        || s.end() - s.start() > 60)
+      throw new ApiError(400, Messages.text("platformControllerSubtitleText01"));
     clips.subtitle(stream, AuthService.current(), s.start(), s.end(), s.text());
     return Map.of("ok", true);
   }

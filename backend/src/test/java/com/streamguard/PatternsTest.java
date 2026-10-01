@@ -25,25 +25,29 @@ class PatternsTest {
 
   @Test
   void builderProtectsImmutableRules() {
-    var words = new ArrayList<>(List.of("prohibido"));
+    var words = new ArrayList<>(List.of(TestFixtures.text("patternsTestText01")));
     var p = new ModerationPolicy.Builder().blockedWords(words).build();
     words.clear();
-    assertEquals(List.of("prohibido"), p.blockedWords());
+    assertEquals(List.of(TestFixtures.text("patternsTestText02")), p.blockedWords());
     assertThrows(UnsupportedOperationException.class, () -> p.blockedWords().clear());
   }
 
   @Test
   void localFactoryUsesWordBoundariesAndNormalizesAccents() {
-    var p = new ModerationPolicy.Builder().blockedWords(List.of("acción")).build();
+    var p =
+        new ModerationPolicy.Builder()
+            .blockedWords(List.of(TestFixtures.text("patternsTestText03")))
+            .build();
     var analyzer = new AiToolkitFactory.LocalToolkit(json).moderation();
-    assertEquals("RESTRICTED", analyzer.analyze("Esa ACCION no se permite", p).category());
-    assertEquals("SAFE", analyzer.analyze("interacción", p).category());
-    assertEquals("LINK", analyzer.analyze("mira https://example.com", p).category());
+    assertEquals(
+        "RESTRICTED", analyzer.analyze(TestFixtures.text("patternsTestText04"), p).category());
+    assertEquals("SAFE", analyzer.analyze(TestFixtures.text("patternsTestText05"), p).category());
+    assertEquals("LINK", analyzer.analyze("see https://example.com", p).category());
     assertEquals(
         "SAFE",
         analyzer
             .analyze(
-                "mira https://example.com", new ModerationPolicy.Builder().allowLinks(true).build())
+                "see https://example.com", new ModerationPolicy.Builder().allowLinks(true).build())
             .category());
   }
 
@@ -56,7 +60,12 @@ class PatternsTest {
             json);
     assertThrows(
         IllegalArgumentException.class,
-        () -> factory.moderation().analyze("mensaje", new ModerationPolicy.Builder().build()));
+        () ->
+            factory
+                .moderation()
+                .analyze(
+                    TestFixtures.text("patternsTestText06"),
+                    new ModerationPolicy.Builder().build()));
     var editor =
         new AiToolkitFactory.GeminiToolkit(
             (instruction, input, schema) -> json.valueToTree(Map.of("summary", "Incomplete")),
@@ -70,8 +79,9 @@ class PatternsTest {
     List<String> sent = new ArrayList<>();
     NotificationBridge.Delivery delivery = (u, type, title, body) -> sent.add(type + ":" + body);
     var user = UUID.randomUUID();
-    new NotificationBridge.ClipNotice(delivery).send(user, "clip listo");
-    new NotificationBridge.ModerationNotice(delivery).send(user, "mensaje oculto");
-    assertEquals(List.of("CLIP:clip listo", "MODERATION:mensaje oculto"), sent);
+    new NotificationBridge.ClipNotice(delivery).send(user, "clip ready");
+    new NotificationBridge.ModerationNotice(delivery)
+        .send(user, TestFixtures.text("patternsTestText07"));
+    assertEquals(List.of("CLIP:clip ready", TestFixtures.text("patternsTestText08")), sent);
   }
 }

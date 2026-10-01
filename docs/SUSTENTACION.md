@@ -1,6 +1,6 @@
 # Guion de sustentación
 
-La presentación editable está en `artifacts/StreamGuard-presentacion-final.pptx`. El código de autoría está en `scripts/build-presentation.mjs`. El diseño sigue los colores de la aplicación. Las capturas proceden de las pruebas del producto, incluida una cámara sintética; no se presentan como transmisiones de una persona real.
+La presentación editable está en `artifacts/StreamGuard-final-presentation.pptx`. El código de autoría está en `scripts/build-presentation.mjs`. El diseño sigue los colores de la aplicación. Las capturas proceden de las pruebas del producto, incluida una cámara sintética; no se presentan como transmisiones de una persona real.
 
 ## Recorrido sugerido de 10 a 15 minutos
 

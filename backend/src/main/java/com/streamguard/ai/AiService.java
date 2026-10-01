@@ -2,6 +2,7 @@ package com.streamguard.ai;
 
 import com.fasterxml.jackson.databind.*;
 import com.streamguard.core.*;
+import com.streamguard.i18n.Messages;
 import com.streamguard.patterns.*;
 import com.streamguard.patterns.AiToolkitFactory.Verdict;
 import java.util.*;
@@ -73,17 +74,13 @@ public class AiService {
     }
     boolean acquired = slots.tryAcquire();
     try {
-      if (!acquired) throw new IllegalStateException("IA ocupada");
+      if (!acquired) throw new IllegalStateException("AI concurrency limit reached");
       Verdict result = toolkit().moderation().analyze(text, policy);
       response(id, result, start, configured() ? "SUCCEEDED" : "LOCAL");
       return new Analysis(id, result);
     } catch (Exception e) {
       Verdict result =
-          new Verdict(
-              "UNCERTAIN",
-              .6,
-              "Gemini no respondió o la respuesta fue inválida; requiere revisión humana",
-              "UNAVAILABLE");
+          new Verdict("UNCERTAIN", .6, Messages.text("aiServiceModerateText02"), "UNAVAILABLE");
       response(id, result, start, "FAILED");
       return new Analysis(id, result);
     } finally {
@@ -96,7 +93,7 @@ public class AiService {
     long start = System.currentTimeMillis();
     boolean acquired = slots.tryAcquire();
     try {
-      if (!acquired) throw new IllegalStateException("IA ocupada");
+      if (!acquired) throw new IllegalStateException("AI concurrency limit reached");
       var factory = toolkit();
       JsonNode result = factory.editorial().compose(input);
       response(id, result, start, configured() ? "SUCCEEDED" : "LOCAL");
@@ -104,7 +101,7 @@ public class AiService {
     } catch (Exception e) {
       var result = new AiToolkitFactory.LocalToolkit(json).editorial().compose(input);
       ((com.fasterxml.jackson.databind.node.ObjectNode) result)
-          .put("summary", "Gemini no está disponible. Intenta generar el análisis nuevamente.");
+          .put("summary", Messages.text("aiServiceEditorialText04"));
       response(id, result, start, "FAILED");
       return new Editorial(id, result, "UNAVAILABLE");
     } finally {

@@ -8,7 +8,8 @@ Proyecto académico de streaming con frontend **escrito en Java (GWT)**, backend
 2. Sigue [DESPLIEGUE.md](docs/DESPLIEGUE.md) para publicarla en tus cuentas.
 3. Consulta [PATRONES.md](docs/PATRONES.md) para sustentar los cinco patrones requeridos.
 4. Consulta [BASE_DE_DATOS.md](docs/BASE_DE_DATOS.md), [ARQUITECTURA.md](docs/ARQUITECTURA.md) y [REQUISITOS.md](docs/REQUISITOS.md).
-5. Revisa [PRUEBAS.md](docs/PRUEBAS.md) y la [presentación editable](artifacts/StreamGuard-presentacion-final.pptx), con su [guion de sustentación](docs/SUSTENTACION.md).
+5. Revisa [PRUEBAS.md](docs/PRUEBAS.md) y la [presentación editable](artifacts/StreamGuard-final-presentation.pptx), con su [guion de sustentación](docs/SUSTENTACION.md).
+6. Consulta [IDIOMAS.md](docs/IDIOMAS.md): código en inglés y textos de la aplicación en recursos de español.
 
 ## Funciones implementadas
 

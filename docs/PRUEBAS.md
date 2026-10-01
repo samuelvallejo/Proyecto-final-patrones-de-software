@@ -4,11 +4,13 @@ Verificación local del 1 de octubre de 2026. Se usaron Java 21, Maven 3.9.9, Po
 
 ## Backend y patrones
 
-Las **9 pruebas Java pasaron**, sin errores ni pruebas omitidas: cinco en `PatternsTest` y cuatro en `PlatformIntegrationTest`. Las pruebas de integración usan una base separada y solicitudes HTTP reales contra Spring Boot. Comprueban registro y sesiones, propiedad y permisos, configuración y moderación, decisiones humanas, persistencia, archivos multimedia, publicación y recorte real de clips con FFmpeg. Las pruebas de patrones verifican la construcción de políticas, clasificación local, validación de respuestas de la familia Gemini y delegación de avisos.
+Las **10 pruebas Java pasaron**, sin errores ni pruebas omitidas: cinco en `PatternsTest` y cinco en `PlatformIntegrationTest`. Las pruebas de integración usan una base separada y solicitudes HTTP reales contra Spring Boot. Comprueban registro y sesiones, propiedad y permisos, configuración y moderación, decisiones humanas, persistencia, archivos multimedia, publicación y recorte real de clips con FFmpeg. Las pruebas de patrones verifican la construcción de políticas, clasificación local, validación de respuestas de la familia Gemini y delegación de avisos.
 
 Las dos migraciones Flyway fueron aplicadas y validadas. El modelo contiene **64 tablas de dominio**, además de la tabla técnica de Flyway, y **101 referencias de clave foránea** en V1. El catálogo y el diagrama se derivan de la migración mediante `scripts/document-schema.py`.
 
 El empaquetado del backend y la compilación del frontend Java GWT terminaron correctamente. En Windows se debe cerrar el proceso que ejecuta el JAR antes de volver a empaquetarlo: Java mantiene el archivo abierto.
+
+La prueba adicional comprueba que la validación devuelve los nombres y mensajes en español. El verificador de catálogos comprobó 563 referencias de traducción. Véase [IDIOMAS.md](IDIOMAS.md).
 
 ## Navegador
 
@@ -24,7 +26,7 @@ El empaquetado del backend y la compilación del frontend Java GWT terminaron co
 8. Navegación a 390 píxeles de ancho, sin desbordamiento horizontal.
 9. Finalización del directo y aviso a los espectadores.
 
-El recorrido exige que no ocurran errores JavaScript en las páginas. Las capturas desktop y móvil de `artifacts/` muestran la aplicación que ejecutaron las pruebas. La presentación se exportó y se revisaron sus 14 diapositivas renderizadas, además de las comprobaciones de estructura del PPTX.
+También se comprobaron el título de la página y la traducción de un error de permisos de cámara. El recorrido exige que no ocurran errores JavaScript en las páginas. Las capturas desktop y móvil de `artifacts/` muestran la aplicación que ejecutaron las pruebas. La presentación se exportó y se revisaron sus 14 diapositivas renderizadas, además de las comprobaciones de estructura del PPTX.
 
 ## Repetir la verificación
 

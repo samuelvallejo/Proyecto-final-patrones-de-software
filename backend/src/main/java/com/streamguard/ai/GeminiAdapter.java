@@ -35,8 +35,8 @@ public class GeminiAdapter implements AiGateway {
 
   @Override
   public JsonNode generate(String instruction, JsonNode input, JsonNode schema) {
-    if (!configured()) throw new IllegalStateException("Gemini no está configurado");
-    if (!model.matches("[A-Za-z0-9._-]+")) throw new IllegalStateException("Modelo inválido");
+    if (!configured()) throw new IllegalStateException("Gemini is not configured");
+    if (!model.matches("[A-Za-z0-9._-]+")) throw new IllegalStateException("Invalid model");
     try {
       var body =
           Map.of(
@@ -70,8 +70,7 @@ public class GeminiAdapter implements AiGateway {
               .build();
       var res = client.send(req, HttpResponse.BodyHandlers.ofString());
       if (res.statusCode() != 200)
-        throw new IllegalStateException(
-            "Proveedor IA no disponible (HTTP " + res.statusCode() + ")");
+        throw new IllegalStateException("AI provider unavailable (HTTP " + res.statusCode() + ")");
       var envelope = json.readTree(res.body());
       var parts = envelope.path("candidates").path(0).path("content").path("parts");
       StringBuilder text = new StringBuilder();
@@ -80,9 +79,9 @@ public class GeminiAdapter implements AiGateway {
       return json.readTree(text.toString());
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new IllegalStateException("Consulta IA interrumpida");
+      throw new IllegalStateException("AI request interrupted");
     } catch (Exception e) {
-      throw new IllegalStateException("No se pudo obtener una respuesta válida de Gemini", e);
+      throw new IllegalStateException("Could not obtain a valid Gemini response", e);
     }
   }
 }

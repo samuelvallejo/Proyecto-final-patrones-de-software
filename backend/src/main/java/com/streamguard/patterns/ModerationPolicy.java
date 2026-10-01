@@ -69,7 +69,7 @@ public record ModerationPolicy(
           || !Double.isFinite(block)
           || review < 0
           || block > 1
-          || review > block) throw new IllegalArgumentException("Política inválida");
+          || review > block) throw new IllegalArgumentException("Invalid policy");
       return new ModerationPolicy(level, hide, mute, seconds, review, block, words, topics, links);
     }
   }

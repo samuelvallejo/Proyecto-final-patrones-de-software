@@ -1,5 +1,6 @@
 package com.streamguard.core;
 
+import com.streamguard.i18n.Messages;
 import java.io.*;
 import java.nio.file.*;
 import java.time.Duration;
@@ -29,9 +30,10 @@ public class MediaService {
   }
 
   public Path path(String key) {
-    if (!key.matches("[a-f0-9-]+\\.webm")) throw new ApiError(404, "Archivo no encontrado");
+    if (!key.matches("[a-f0-9-]+\\.webm"))
+      throw new ApiError(404, Messages.text("mediaServicePathText01"));
     Path p = root.resolve(key).normalize();
-    if (!p.startsWith(root)) throw new ApiError(404, "Archivo no encontrado");
+    if (!p.startsWith(root)) throw new ApiError(404, Messages.text("mediaServicePathText01"));
     return p;
   }
 
@@ -39,7 +41,7 @@ public class MediaService {
 
   public Saved save(UUID owner, MultipartFile file) {
     if (file.isEmpty() || file.getSize() > 30 * 1024 * 1024)
-      throw new ApiError(400, "El clip debe tener entre 1 byte y 30 MB");
+      throw new ApiError(400, Messages.text("mediaServiceSaveText03"));
     String key = UUID.randomUUID() + ".webm";
     Path destination = path(key);
     try {
@@ -56,7 +58,7 @@ public class MediaService {
             magic.length >= 8
                 && new String(magic, 4, 4, java.nio.charset.StandardCharsets.US_ASCII)
                     .equals("ftyp");
-        if (!webm && !mp4) throw new ApiError(400, "Se requiere una grabación WebM o MP4 válida");
+        if (!webm && !mp4) throw new ApiError(400, Messages.text("mediaServiceSaveText04"));
       }
       if (mp4) {
         Path original = root.resolve(UUID.randomUUID() + ".mp4");
@@ -86,7 +88,7 @@ public class MediaService {
       } else file.transferTo(destination);
       double duration = probe(destination);
       if (duration <= 0 || duration > 65)
-        throw new ApiError(400, "La grabación debe durar entre 0 y 65 segundos");
+        throw new ApiError(400, Messages.text("mediaServiceSaveText05"));
       UUID asset =
           db.insert(
               "INSERT INTO media_assets(owner_id,storage_key,mime_type,size_bytes,duration_seconds)"
@@ -101,8 +103,7 @@ public class MediaService {
       throw e;
     } catch (Exception e) {
       delete(destination);
-      throw new ApiError(
-          503, "No se pudo procesar el video. Verifica FFmpeg y el volumen de almacenamiento");
+      throw new ApiError(503, Messages.text("mediaServiceSaveText06"));
     }
   }
 
@@ -186,7 +187,7 @@ public class MediaService {
       return new Saved(id, dest.getFileName().toString(), d);
     } catch (Exception e) {
       delete(dest);
-      throw new ApiError(503, "No se pudo recortar el clip con FFmpeg");
+      throw new ApiError(503, Messages.text("mediaServiceTrimText07"));
     }
   }
 
@@ -225,9 +226,9 @@ public class MediaService {
                 + " c.status='APPROVED') AS published FROM media_assets a WHERE a.id=?",
             asset);
     if (!Objects.equals(row.get("owner_id"), user) && !(boolean) row.get("published"))
-      throw new ApiError(403, "El creador aún no ha publicado este clip");
+      throw new ApiError(403, Messages.text("mediaServiceAuthorizedText08"));
     Path p = path(row.get("storage_key").toString());
-    if (!Files.exists(p)) throw new ApiError(404, "El archivo ya no está disponible");
+    if (!Files.exists(p)) throw new ApiError(404, Messages.text("mediaServiceAuthorizedText09"));
     return p;
   }
 }

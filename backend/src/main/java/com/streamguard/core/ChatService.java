@@ -1,6 +1,7 @@
 package com.streamguard.core;
 
 import com.streamguard.ai.AiService;
+import com.streamguard.i18n.Messages;
 import com.streamguard.live.LiveHub;
 import com.streamguard.patterns.*;
 import com.streamguard.patterns.AiToolkitFactory.Verdict;
@@ -45,7 +46,8 @@ public class ChatService {
   public Map<String, Object> send(UUID stream, UUID user, String text) {
     var s = platform.stream(stream);
     UUID channel = Db.id(s.get("channel_id"));
-    if (!s.get("status").equals("LIVE")) throw new ApiError(409, "El directo ya terminó");
+    if (!s.get("status").equals("LIVE"))
+      throw new ApiError(409, Messages.text("chatServiceSendText01"));
     var policy = platform.policy(channel);
     UUID message =
         tx.execute(
@@ -56,7 +58,7 @@ public class ChatService {
                           + " revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now())",
                       channel,
                       user)
-                  > 0) throw new ApiError(403, "Tienes una sanción activa en este canal");
+                  > 0) throw new ApiError(403, Messages.text("chatServiceSendText02"));
               int slow =
                   (int)
                       db.one(
@@ -70,7 +72,7 @@ public class ChatService {
                       stream,
                       user,
                       Math.max(1, slow))
-                  > 0) throw new ApiError(429, "Espera antes de enviar otro mensaje");
+                  > 0) throw new ApiError(429, Messages.text("chatServiceSendText03"));
               return db.insert(
                   "INSERT INTO chat_messages(room_id,user_id,content) SELECT id,?,? FROM chat_rooms"
                       + " WHERE stream_id=? RETURNING id",
@@ -88,8 +90,7 @@ public class ChatService {
             user,
             text)
         >= 3)
-      verdict =
-          new Verdict("SPAM", 1, "Mensaje repetido tres o más veces en un minuto", "LOCAL_RULES");
+      verdict = new Verdict("SPAM", 1, Messages.text("chatServiceSendText04"), "LOCAL_RULES");
     Verdict finalVerdict = verdict;
     String status =
         tx.execute(
@@ -169,8 +170,8 @@ public class ChatService {
                 db.insert(
                     "INSERT INTO stream_highlights(stream_id,source,at_seconds,score,reason) SELECT"
                         + " id,'CHAT_SPIKE',GREATEST(0,extract(epoch FROM"
-                        + " now()-started_at)::int),1,'Aumento de participación: al menos 8"
-                        + " mensajes en 10 segundos' FROM streams WHERE id=? RETURNING id",
+                        + " now()-started_at)::int),1,? FROM streams WHERE id=? RETURNING id",
+                    Messages.text("chatSpikeReason"),
                     stream);
             hub.toHost(stream, Map.of("type", "capture", "highlightId", h));
             hub.toModerators(stream, Map.of("type", "highlight", "source", "CHAT_SPIKE"));
@@ -190,7 +191,7 @@ public class ChatService {
     UUID channel = Db.id(q.get("channel_id"));
     platform.manager(channel, reviewer);
     if (!q.get("queue_status").equals("PENDING"))
-      throw new ApiError(409, "El mensaje ya fue revisado");
+      throw new ApiError(409, Messages.text("chatServiceReviewText05"));
     db.exec(
         "UPDATE moderation_queue SET status=?,reviewer_id=?,reviewed_at=now() WHERE id=?",
         approve ? "APPROVED" : "REJECTED",
@@ -202,12 +203,13 @@ public class ChatService {
         q.get("id"));
     db.exec(
         "INSERT INTO moderation_actions(channel_id,message_id,actor_id,target_id,action,reason)"
-            + " VALUES (?,?,?,?,?,'Decisión de un moderador humano')",
+            + " VALUES (?,?,?,?,?,?)",
         channel,
         q.get("id"),
         reviewer,
         q.get("user_id"),
-        approve ? "APPROVE" : "HIDE");
+        approve ? "APPROVE" : "HIDE",
+        Messages.text("humanReviewReason"));
     if (approve)
       hub.broadcast(
           Db.id(q.get("stream_id")),
@@ -227,7 +229,7 @@ public class ChatService {
       UUID channel, UUID target, UUID actor, String type, int seconds, String reason) {
     platform.manager(channel, actor);
     if (db.count("SELECT count(*) FROM channels WHERE id=? AND owner_id=?", channel, target) > 0)
-      throw new ApiError(400, "No puedes sancionar al propietario");
+      throw new ApiError(400, Messages.text("chatServiceSanctionText06"));
     UUID action =
         db.insert(
             "INSERT INTO moderation_actions(channel_id,actor_id,target_id,action,reason) VALUES"
@@ -256,9 +258,10 @@ public class ChatService {
     db.exec("UPDATE user_sanctions SET revoked_at=now() WHERE id=?", sanction);
     db.exec(
         "INSERT INTO moderation_actions(channel_id,actor_id,target_id,action,reason) VALUES"
-            + " (?,?,?,'REVOKE','Sanción retirada por moderador')",
+            + " (?,?,?,'REVOKE',?)",
         row.get("channel_id"),
         actor,
-        row.get("user_id"));
+        row.get("user_id"),
+        Messages.text("sanctionRevokedReason"));
   }
 }

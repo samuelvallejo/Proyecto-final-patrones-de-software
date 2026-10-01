@@ -108,11 +108,11 @@ public class StreamGuardApp implements EntryPoint {
                           ? new JSONObject()
                           : JSONParser.parseStrict(response.getText()));
                 } catch (Exception e) {
-                  toast("No se pudo mostrar la respuesta del servidor", true);
+                  toast(UiText.get("uiOnResponseReceivedText01"), true);
                 }
               } else {
                 String error =
-                    "No se pudo completar la operación (" + response.getStatusCode() + ")";
+                    UiText.get("uiOnResponseReceivedText02") + response.getStatusCode() + ")";
                 try {
                   error = text(obj(JSONParser.parseStrict(response.getText())), "error");
                 } catch (Exception ignored) {
@@ -129,15 +129,12 @@ public class StreamGuardApp implements EntryPoint {
             }
 
             public void onError(Request request, Throwable e) {
-              toast(
-                  "No se pudo conectar al backend. Revisa la dirección de la API y vuelve a"
-                      + " intentar.",
-                  true);
+              toast(UiText.get("uiOnErrorText03"), true);
               if (failed != null) failed.run();
             }
           });
     } catch (RequestException e) {
-      toast("Error al enviar la solicitud", true);
+      toast(UiText.get("uiOnErrorText04"), true);
       if (failed != null) failed.run();
     }
   }
@@ -146,32 +143,23 @@ public class StreamGuardApp implements EntryPoint {
     root.clear();
     root.setStyleName("app-shell");
     FlowPanel side = panel("sidebar");
-    side.add(
-        html(
-            "<a class='brand' href='#' aria-label='StreamGuard, inicio'>"
-                + icon("shield")
-                + "<span>stream<span class='brand-accent'>guard</span><small>LIVE, CON"
-                + " CONFIANZA</small></span></a>"));
-    side.add(html("<p class='nav-label'>DESCUBRE</p>"));
+    side.add(html(UiText.get("uiShellText05") + icon("shield") + UiText.get("uiShellText06")));
+    side.add(html(UiText.get("uiShellText07")));
     nav = panel("nav-list");
     side.add(nav);
-    navButton("explore", "Explorar", "grid");
-    navButton("studio", "Mi estudio", "video");
-    side.add(html("<p class='nav-label nav-second'>TU COMUNIDAD</p>"));
+    navButton("explore", UiText.get("uiShellText08"), "grid");
+    navButton("studio", UiText.get("myStudio"), "video");
+    side.add(html(UiText.get("uiShellText09")));
     FlowPanel second = panel("nav-list");
     FlowPanel first = nav;
     nav = second;
-    navButton("moderation", "Moderación", "shield");
-    navButton("clips", "Biblioteca de clips", "play");
-    navButton("assistant", "Asistente IA", "spark");
-    navButton("settings", "Configuración", "settings");
+    navButton("moderation", UiText.get("uiShellText10"), "shield");
+    navButton("clips", UiText.get("uiShellText11"), "play");
+    navButton("assistant", UiText.get("uiShellText12"), "spark");
+    navButton("settings", UiText.get("uiShellText13"), "settings");
     nav = first;
     side.add(second);
-    side.add(
-        html(
-            "<div class='sidebar-bottom'><div class='status-dot'></div><strong>Un espacio para"
-                + " crear</strong><p>Tu comunidad, cuidada.<br>Tu contenido, en"
-                + " movimiento.</p><span class='version-pill'>StreamGuard · 1.0</span></div>"));
+    side.add(html(UiText.get("uiShellText14")));
     root.add(side);
     FlowPanel main = panel("main-shell");
     FlowPanel header = panel("topbar");
@@ -183,11 +171,11 @@ public class StreamGuardApp implements EntryPoint {
               mobileNav = !mobileNav;
               root.setStyleName("app-shell" + (mobileNav ? " nav-open" : ""));
             });
-    menu.getElement().setAttribute("aria-label", "Mostrar menú");
+    menu.getElement().setAttribute("aria-label", UiText.get("uiShellText15"));
     header.add(menu);
     FlowPanel find = panel("global-search");
     find.add(html(icon("search")));
-    TextBox query = input("Busca una transmisión o un canal", search);
+    TextBox query = input(UiText.get("uiShellText16"), search);
     query.addKeyDownHandler(
         e -> {
           if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
@@ -198,17 +186,18 @@ public class StreamGuardApp implements EntryPoint {
     find.add(query);
     header.add(find);
     FlowPanel account = panel("account-actions");
-    account.add(html("<span class='desktop-note'>CREA. CONECTA. COMPARTE.</span>"));
+    account.add(html(UiText.get("uiShellText17")));
     if (user == null)
-      account.add(button("Iniciar sesión", "button primary small", () -> route("login")));
+      account.add(
+          button(UiText.get("uiShellText18"), "button primary small", () -> route("login")));
     else {
-      account.add(button("Avisos", "button icon-button", this::notifications));
+      account.add(button(UiText.get("uiShellText19"), "button icon-button", this::notifications));
       Button badge =
           button(
               text(user, "username").substring(0, 1).toUpperCase(),
               "avatar",
               () -> route("account"));
-      badge.getElement().setAttribute("aria-label", "Mi cuenta");
+      badge.getElement().setAttribute("aria-label", UiText.get("myAccount"));
       account.add(badge);
     }
     header.add(account);
@@ -225,7 +214,7 @@ public class StreamGuardApp implements EntryPoint {
             + "<span>"
             + esc(label)
             + "</span>"
-            + (key.equals("moderation") ? "<span class='nav-chip'>IA</span>" : ""));
+            + (key.equals("moderation") ? UiText.get("uiNavButtonText20") : ""));
     b.getElement().setAttribute("aria-label", label);
     b.setStyleName("nav-item" + (screen.equals(key) ? " active" : ""));
     b.addClickHandler(e -> route(key));
@@ -303,39 +292,31 @@ public class StreamGuardApp implements EntryPoint {
     FlowPanel hero = panel("hero");
     hero.add(
         html(
-            "<div class='hero-copy'><span class='eyebrow'><span class='status-dot'></span>EL"
-                + " DIRECTO EMPIEZA CONTIGO</span><h1>Tu comunidad.<br>En directo.<br><span>Bajo"
-                + " control.</span></h1><p>Un lugar para compartir lo que te mueve.<br>Un asistente"
-                + " para cuidar lo que más importa.</p></div><div class='hero-art'"
-                + " aria-hidden='true'><div class='orbit orbit-one'></div><div class='orbit"
-                + " orbit-two'></div><div class='signal-core'>"
+            UiText.get("uiExploreText21")
                 + icon("shield")
                 + "</div><div class='floating-label label-top'>"
                 + icon("spark")
-                + "Un asistente a tu lado</div><div class='floating-label label-bottom'><span"
-                + " class='status-dot'></span>Conecta con tu audiencia</div><div"
-                + " class='sound-wave'><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>"));
+                + UiText.get("uiExploreText22")));
     FlowPanel heroActions = panel("hero-actions");
-    heroActions.add(button("Abrir mi estudio  ↗", "button primary", () -> route("studio")));
+    heroActions.add(button(UiText.get("openStudio"), "button primary", () -> route("studio")));
     heroActions.add(
-        button("Ver clips de la comunidad", "button subtle", () -> route("public-clips")));
+        button(UiText.get("uiExploreText23"), "button subtle", () -> route("public-clips")));
     hero.add(heroActions);
     content.add(hero);
     FlowPanel filters = panel("category-row");
-    filters.add(filter("Todo", ""));
+    filters.add(filter(UiText.get("uiExploreText24"), ""));
     for (int i = 0; i < categories.size(); i++) {
       JSONObject cat = obj(categories.get(i));
       filters.add(filter(text(cat, "name"), text(cat, "slug")));
     }
     content.add(filters);
     FlowPanel section = panel("section-title");
-    section.add(
-        html("<div><p class='eyebrow'>ENCUENTRA TU COMUNIDAD</p><h2>Ahora en directo</h2></div>"));
+    section.add(html(UiText.get("uiExploreText25")));
     section.add(html("<span class='live-pill'><span class='status-dot'></span>TIEMPO REAL</span>"));
     content.add(section);
     FlowPanel cards = panel("stream-grid");
     content.add(cards);
-    cards.add(empty("Conectando con la comunidad…", "Buscando transmisiones disponibles."));
+    cards.add(empty(UiText.get("uiExploreText26"), UiText.get("uiExploreText27")));
     api(
         "GET",
         "/explore?q="
@@ -349,11 +330,10 @@ public class StreamGuardApp implements EntryPoint {
           if (rows.size() == 0) {
             cards.add(
                 empty(
-                    "Aquí empieza la próxima gran conversación",
+                    UiText.get("uiExploreText28"),
                     search.isEmpty()
-                        ? "Todavía no hay transmisiones en directo. Crea tu canal y sé el primero"
-                              + " en compartir."
-                        : "No encontramos directos con esa búsqueda. Prueba otro término."));
+                        ? UiText.get("uiExploreText29")
+                        : UiText.get("uiExploreText30")));
             return;
           }
           for (int i = 0; i < rows.size(); i++) {
@@ -361,13 +341,11 @@ public class StreamGuardApp implements EntryPoint {
             FlowPanel card = panel("stream-card");
             card.add(
                 html(
-                    "<div class='stream-cover'><span class='live-tag'>EN VIVO</span><div"
-                        + " class='cover-waves'></div>"
+                    UiText.get("uiExploreText31")
                         + icon("video")
                         + "<span class='viewer-tag'>"
                         + esc(text(s, "viewers"))
-                        + " espectadores</span></div><div class='stream-copy'><span"
-                        + " class='category-text'>"
+                        + UiText.get("streamViewerCountSuffix")
                         + esc(text(s, "category"))
                         + "</span><h3>"
                         + esc(text(s, "title"))
@@ -376,7 +354,7 @@ public class StreamGuardApp implements EntryPoint {
                         + " <span class='verified'>✓</span></p></div>"));
             card.add(
                 button(
-                    "Entrar al directo  →",
+                    UiText.get("uiExploreText32"),
                     "button subtle full",
                     () -> {
                       stream = text(s, "id");
@@ -387,24 +365,17 @@ public class StreamGuardApp implements EntryPoint {
         },
         () -> {
           cards.clear();
-          cards.add(
-              empty(
-                  "No logramos conectar",
-                  "El servidor puede estar apagado. Inicia el backend para explorar"
-                      + " transmisiones."));
+          cards.add(empty(UiText.get("uiExploreText33"), UiText.get("uiExploreText34")));
         });
     content.add(
         html(
             "<div class='feature-strip'><article>"
                 + icon("shield")
-                + "<div><h3>El chat, en buenas manos</h3><p>Reglas claras, apoyo de IA y revisión"
-                + " humana.</p></div></article><article>"
+                + UiText.get("uiExploreText35")
                 + icon("play")
-                + "<div><h3>Momentos que se quedan</h3><p>Marca, revisa y comparte tus mejores"
-                + " clips.</p></div></article><article>"
+                + UiText.get("uiExploreText36")
                 + icon("video")
-                + "<div><h3>Tu directo, donde estés</h3><p>Desde tu computador o desde tu"
-                + " celular.</p></div></article></div>"));
+                + UiText.get("uiExploreText37")));
   }
 
   private Button filter(String label, String slug) {
@@ -424,39 +395,36 @@ public class StreamGuardApp implements EntryPoint {
 
   private void authView(boolean register) {
     title(
-        "BIENVENIDO A STREAMGUARD",
-        register ? "Tu comunidad empieza aquí" : "Qué bueno verte de nuevo",
-        register
-            ? "Crea una cuenta para transmitir, conversar y cuidar tu comunidad."
-            : "Entra a tu cuenta y vuelve a conectar.");
+        UiText.get("welcomeEyebrow"),
+        register ? UiText.get("uiAuthViewText38") : UiText.get("uiAuthViewText39"),
+        register ? UiText.get("uiAuthViewText40") : UiText.get("uiAuthViewText41"));
     FlowPanel card = panel("form-card auth-card");
-    TextBox username = input("Tu nombre de usuario", "");
-    TextBox email = input("tu@correo.com", "");
+    TextBox username = input(UiText.get("uiAuthViewText42"), "");
+    TextBox email = input(UiText.get("uiAuthViewText43"), "");
     email.getElement().setAttribute("type", "email");
     PasswordTextBox password = new PasswordTextBox();
-    password.getElement().setAttribute("placeholder", "Mínimo 10 caracteres");
+    password.getElement().setAttribute("placeholder", UiText.get("uiAuthViewText44"));
     password
         .getElement()
         .setAttribute("autocomplete", register ? "new-password" : "current-password");
-    if (register) card.add(field("Nombre de usuario", username));
-    card.add(field("Correo electrónico", email));
-    card.add(field("Contraseña", password));
-    CheckBox consent =
-        new CheckBox(
-            "Acepto que los mensajes se analicen para la moderación del chat, incluyendo el envío a"
-                + " Gemini cuando esté configurado.");
+    if (register) card.add(field(UiText.get("uiAuthViewText45"), username));
+    card.add(field(UiText.get("uiAuthViewText46"), email));
+    card.add(field(UiText.get("uiAuthViewText47"), password));
+    CheckBox consent = new CheckBox(UiText.get("uiAuthViewText48"));
     consent.setStyleName("consent");
     if (register) card.add(consent);
     Button submit =
         button(
-            register ? "Crear mi cuenta" : "Entrar a mi cuenta", "button primary full", () -> {});
+            register ? UiText.get("createAccount") : UiText.get("signIn"),
+            "button primary full",
+            () -> {});
     Runnable send =
         () -> {
           if (register
               && (username.getText().length() < 3
                   || password.getText().length() < 10
                   || !consent.getValue())) {
-            toast("Revisa el usuario, la contraseña y el consentimiento para la moderación", true);
+            toast(UiText.get("uiAuthViewText49"), true);
             return;
           }
           submit.setEnabled(false);
@@ -489,7 +457,7 @@ public class StreamGuardApp implements EntryPoint {
     card.add(submit);
     card.add(
         button(
-            register ? "Ya tengo una cuenta" : "Quiero crear una cuenta",
+            register ? UiText.get("uiAuthViewText50") : UiText.get("uiAuthViewText51"),
             "text-button",
             () -> route(register ? "login" : "register")));
     content.add(card);
@@ -497,14 +465,17 @@ public class StreamGuardApp implements EntryPoint {
 
   private void chooseChannel(JSONArray rows) {
     title(
-        "TUS CANALES",
-        "Elige un espacio",
-        "Puedes administrar tu canal o moderar una comunidad que te haya invitado.");
+        UiText.get("uiChooseChannelText52"),
+        UiText.get("uiChooseChannelText53"),
+        UiText.get("uiChooseChannelText54"));
     for (int i = 0; i < rows.size(); i++) {
       JSONObject c = obj(rows.get(i));
       content.add(
           button(
-              text(c, "name") + (bool(c, "is_owner") ? " · Mi canal" : " · Moderador"),
+              text(c, "name")
+                  + (bool(c, "is_owner")
+                      ? UiText.get("uiChooseChannelText55")
+                      : UiText.get("moderatorSuffix")),
               "button subtle",
               () -> {
                 channel = text(c, "id");
@@ -516,19 +487,22 @@ public class StreamGuardApp implements EntryPoint {
   private void createChannel() {
     content.clear();
     title(
-        "TU PRIMER PASO",
-        "Dale un hogar a tu comunidad",
-        "Elige un nombre y una dirección para tu canal.");
+        UiText.get("uiCreateChannelText56"),
+        UiText.get("uiCreateChannelText57"),
+        UiText.get("uiCreateChannelText58"));
     FlowPanel form = panel("form-card auth-card");
-    TextBox name = input("Nombre del canal", "");
-    TextBox slug = input("mi-canal", text(user, "username").toLowerCase().replace('_', '-'));
-    TextArea description = area("¿Qué vas a compartir?", "");
-    form.add(field("Nombre del canal", name));
-    form.add(field("Dirección · letras minúsculas, números y guiones", slug));
-    form.add(field("Descripción", description));
+    TextBox name = input(UiText.get("uiCreateChannelText59"), "");
+    TextBox slug =
+        input(
+            UiText.get("uiCreateChannelText60"),
+            text(user, "username").toLowerCase().replace('_', '-'));
+    TextArea description = area(UiText.get("uiCreateChannelText61"), "");
+    form.add(field(UiText.get("uiCreateChannelText59"), name));
+    form.add(field(UiText.get("uiCreateChannelText63"), slug));
+    form.add(field(UiText.get("uiCreateChannelText64"), description));
     form.add(
         button(
-            "Crear canal",
+            UiText.get("uiCreateChannelText65"),
             "button primary",
             () ->
                 api(
@@ -572,10 +546,17 @@ public class StreamGuardApp implements EntryPoint {
   private void stats() {
     JSONObject stats = obj(dash.get("stats"));
     FlowPanel grid = panel("stats-grid");
-    grid.add(metric("Seguidores", text(stats, "followers"), "Tu comunidad"));
-    grid.add(metric("Mensajes", text(stats, "messages"), "Participación total"));
-    grid.add(metric("En revisión u ocultos", text(stats, "blocked"), "Moderación del canal"));
-    grid.add(metric("Clips por revisar", text(stats, "pending_clips"), "Listos para decidir"));
+    grid.add(
+        metric(UiText.get("uiStatsText66"), text(stats, "followers"), UiText.get("uiStatsText67")));
+    grid.add(
+        metric(UiText.get("uiStatsText68"), text(stats, "messages"), UiText.get("uiStatsText69")));
+    grid.add(
+        metric(UiText.get("uiStatsText70"), text(stats, "blocked"), UiText.get("uiStatsText71")));
+    grid.add(
+        metric(
+            UiText.get("uiStatsText72"),
+            text(stats, "pending_clips"),
+            UiText.get("uiStatsText73")));
     content.add(grid);
   }
 
@@ -585,21 +566,21 @@ public class StreamGuardApp implements EntryPoint {
 
   private void studio() {
     title(
-        "TU ESPACIO DE CREACIÓN",
-        "Hola, " + text(user, "username") + " ✦",
-        "Todo lo que necesitas para conectar con tu audiencia, en un solo lugar.");
+        UiText.get("uiStudioText74"),
+        UiText.get("studioGreeting") + text(user, "username") + " ✦",
+        UiText.get("uiStudioText75"));
     stats();
     JSONObject latest = obj(dash.get("stream"));
     if (!owner()) {
       content.add(
           html(
-              "<div class='info-banner'>Participas como moderador de "
+              UiText.get("uiStudioText76")
                   + esc(text(obj(dash.get("channel")), "name"))
                   + ".</div>"));
       if (text(latest, "status").equals("LIVE"))
         content.add(
             button(
-                "Abrir directo y moderar",
+                UiText.get("uiStudioText77"),
                 "button primary",
                 () -> {
                   stream = text(latest, "id");
@@ -611,49 +592,43 @@ public class StreamGuardApp implements EntryPoint {
     FlowPanel left = panel("surface");
     left.add(
         html(
-            "<div class='panel-heading'><h2>Tu transmisión</h2><span class='tag'>"
-                + (broadcasting ? "EN VIVO" : "ESTUDIO")
+            UiText.get("uiStudioText78")
+                + (broadcasting ? UiText.get("uiStudioText79") : UiText.get("uiStudioText80"))
                 + "</span></div><div class='video-stage'><video id='live-video' autoplay"
                 + " playsinline muted></video><div class='video-placeholder'"
                 + " id='video-placeholder'>"
                 + icon("video")
-                + "<h3>El escenario es tuyo</h3><p>Prepara tu cámara y empieza a"
-                + " compartir.</p></div><div id='live-caption' class='live-caption'></div></div>"));
+                + UiText.get("uiStudioText81")));
     if (broadcasting) {
       FlowPanel actions = panel("action-row");
       actions.add(
           button(
-              "Marcar momento",
+              UiText.get("uiStudioText82"),
               "button primary",
               () ->
                   api(
                       "POST",
                       "/streams/" + stream + "/highlights",
-                      object("source", "MANUAL", "reason", "Momento marcado por el creador"),
-                      v ->
-                          toast(
-                              "Momento marcado. Se capturará el segmento más reciente.", false))));
+                      object("source", "MANUAL", "reason", UiText.get("uiStudioText83")),
+                      v -> toast(UiText.get("uiStudioText84"), false))));
       actions.add(
           button(
-              "Activar subtítulos",
+              UiText.get("uiStudioText85"),
               "button subtle",
               () ->
                   MediaBridge.captions(
                       error -> {
                         if (!error.isEmpty()) toast(error, true);
-                        else toast("Transcripción activada en este navegador", false);
+                        else toast(UiText.get("uiStudioText86"), false);
                       })));
-      actions.add(button("Finalizar directo", "button danger", () -> finish()));
+      actions.add(button(UiText.get("uiStudioText87"), "button danger", () -> finish()));
       left.add(actions);
       MediaBridge.attach();
     } else if (text(latest, "status").equals("LIVE")) {
-      left.add(
-          html(
-              "<div class='info-banner'>Este canal tiene un directo activo en otra pestaña."
-                  + " Finalízalo allí o ciérralo antes de comenzar.</div>"));
+      left.add(html(UiText.get("uiStudioText88")));
       left.add(
           button(
-              "Cerrar directo activo",
+              UiText.get("uiStudioText89"),
               "button danger",
               () ->
                   api(
@@ -663,25 +638,25 @@ public class StreamGuardApp implements EntryPoint {
                       v -> loadDashboard(true))));
     } else {
       FlowPanel form = panel("stream-form");
-      TextBox name = input("Un título que invite a quedarse", "");
-      TextArea description = area("Cuéntale a tu audiencia de qué trata el directo", "");
+      TextBox name = input(UiText.get("uiStudioText90"), "");
+      TextArea description = area(UiText.get("uiStudioText91"), "");
       ListBox cats = new ListBox();
       for (int i = 0; i < categories.size(); i++) {
         JSONObject c = obj(categories.get(i));
         cats.addItem(text(c, "name"), text(c, "id"));
       }
-      CheckBox shareScreen = new CheckBox("Compartir pantalla en lugar de cámara");
-      form.add(field("Título del directo", name));
+      CheckBox shareScreen = new CheckBox(UiText.get("uiStudioText92"));
+      form.add(field(UiText.get("uiStudioText93"), name));
       FlowPanel row = panel("form-row");
-      row.add(field("Categoría", cats));
-      row.add(field("Descripción", description));
+      row.add(field(UiText.get("uiStudioText94"), cats));
+      row.add(field(UiText.get("uiCreateChannelText64"), description));
       form.add(row);
       form.add(shareScreen);
-      Button start = button("Empezar transmisión  ↗", "button primary", () -> {});
+      Button start = button(UiText.get("uiStudioText96"), "button primary", () -> {});
       start.addClickHandler(
           e -> {
             if (name.getText().isBlank()) {
-              toast("Agrega un título a tu directo", true);
+              toast(UiText.get("uiStudioText97"), true);
               return;
             }
             start.setEnabled(false);
@@ -722,29 +697,20 @@ public class StreamGuardApp implements EntryPoint {
     }
     layout.add(left);
     FlowPanel right = panel("surface studio-side");
-    right.add(
-        html(
-            "<div class='panel-heading'><h2>Asistente de comunidad</h2>"
-                + icon("spark")
-                + "</div>"));
+    right.add(html(UiText.get("uiStudioText98") + icon("spark") + "</div>"));
     right.add(aiStatus());
     JSONObject policy = obj(dash.get("policy"));
     right.add(
         html(
             "<div class='assistant-card'><span class='shield-orb'>"
                 + icon("shield")
-                + "</span><h3>Tu equipo tiene un apoyo extra</h3><p>La moderación está en nivel"
-                + " <strong>"
+                + UiText.get("uiStudioText99")
                 + esc(levelName(text(policy, "level")))
-                + "</strong>. Los casos dudosos quedan pendientes de una decisión"
-                + " humana.</p></div>"));
-    right.add(button("Revisar moderación  →", "button subtle full", () -> route("moderation")));
-    right.add(button("Configurar reglas  →", "button subtle full", () -> route("settings")));
+                + UiText.get("uiStudioText100")));
     right.add(
-        html(
-            "<div class='quick-tip'><strong>Antes de ir en vivo</strong><p>Verifica cámara y"
-                + " micrófono. Marca tus momentos favoritos y revisa cada clip antes de"
-                + " publicarlo.</p></div>"));
+        button(UiText.get("uiStudioText101"), "button subtle full", () -> route("moderation")));
+    right.add(button(UiText.get("uiStudioText102"), "button subtle full", () -> route("settings")));
+    right.add(html(UiText.get("uiStudioText103")));
     layout.add(right);
     content.add(layout);
     if (broadcasting) {
@@ -766,13 +732,13 @@ public class StreamGuardApp implements EntryPoint {
         v -> {
           broadcasting = false;
           MediaBridge.stop();
-          toast("Transmisión finalizada", false);
+          toast(UiText.get("uiFinishText104"), false);
           loadDashboard(true);
         });
   }
 
   private void watch() {
-    title("CONECTA EN TIEMPO REAL", "Entrando al directo…", "La comunidad te espera.");
+    title(UiText.get("uiWatchText105"), UiText.get("uiWatchText106"), UiText.get("uiWatchText107"));
     api(
         "GET",
         "/streams/" + stream,
@@ -788,24 +754,22 @@ public class StreamGuardApp implements EntryPoint {
                   "<div class='video-stage'><video id='live-video' autoplay playsinline"
                       + " controls></video><div class='video-placeholder' id='video-placeholder'>"
                       + icon("video")
-                      + "<h3>Conectando con el creador</h3><p>El video aparecerá cuando el emisor"
-                      + " esté listo.</p></div><div id='live-caption'"
-                      + " class='live-caption'></div></div>"));
+                      + UiText.get("uiWatchText108")));
           FlowPanel bar = panel("action-row");
-          audience = new Label(text(s, "viewers") + " espectadores");
+          audience = new Label(text(s, "viewers") + UiText.get("viewerCountSuffix"));
           bar.add(audience);
           bar.add(
               button(
-                  "Seguir canal",
+                  UiText.get("uiWatchText109"),
                   "button primary small",
                   () -> {
-                    if (user == null) toast("Inicia sesión para seguir este canal", true);
+                    if (user == null) toast(UiText.get("uiWatchText110"), true);
                     else
                       api(
                           "POST",
                           "/channels/" + text(s, "channel_id") + "/follow",
                           new JSONObject(),
-                          r -> toast("Ya sigues este canal", false));
+                          r -> toast(UiText.get("uiWatchText111"), false));
                   }));
           player.add(bar);
           layout.add(player);
@@ -814,7 +778,7 @@ public class StreamGuardApp implements EntryPoint {
           if (text(s, "status").equals("LIVE")) {
             loadMessages();
             MediaBridge.connect(stream, false, this::realtime);
-          } else toast("Esta transmisión ya terminó", false);
+          } else toast(UiText.get("uiWatchText112"), false);
         });
   }
 
@@ -823,21 +787,20 @@ public class StreamGuardApp implements EntryPoint {
     FlowPanel panel = panel("surface chat-panel");
     panel.add(
         html(
-            "<div class='panel-heading'><h2>Chat de la comunidad</h2><span class='mini-tag'>"
-                + icon("shield")
-                + "Moderado</span></div>"));
+            UiText.get("uiChatPanelText113") + icon("shield") + UiText.get("chatModeratedSuffix")));
     chatList = panel("chat-list");
     panel.add(chatList);
     TextBox message =
-        input(user == null ? "Inicia sesión para conversar" : "Comparte algo con la comunidad", "");
+        input(
+            user == null ? UiText.get("uiChatPanelText114") : UiText.get("uiChatPanelText115"), "");
     message.setMaxLength(1000);
     FlowPanel send = panel("chat-compose");
     send.add(message);
-    Button submit = button("Enviar", "button primary small", () -> {});
+    Button submit = button(UiText.get("uiChatPanelText116"), "button primary small", () -> {});
     Runnable action =
         () -> {
           if (user == null) {
-            toast("Inicia sesión para escribir en el chat", true);
+            toast(UiText.get("uiChatPanelText117"), true);
             return;
           }
           if (message.getText().isBlank()) return;
@@ -861,10 +824,7 @@ public class StreamGuardApp implements EntryPoint {
         });
     send.add(submit);
     panel.add(send);
-    panel.add(
-        html(
-            "<p class='chat-footnote'>Sé respetuoso. Tu mensaje se revisa con las reglas del"
-                + " canal.</p>"));
+    panel.add(html(UiText.get("uiChatPanelText118")));
     return panel;
   }
 
@@ -903,7 +863,7 @@ public class StreamGuardApp implements EntryPoint {
       String type = text(e, "type");
       if (type.equals("message")) appendMessage(obj(e.get("message")));
       else if (type.equals("presence") && audience != null)
-        audience.setText(text(e, "viewers") + " espectadores");
+        audience.setText(text(e, "viewers") + UiText.get("viewerCountSuffix"));
       else if (type.equals("notice")) toast(text(e, "body"), false);
       else if (type.equals("error")) toast(text(e, "message"), true);
       else if (type.equals("ended")) {
@@ -913,7 +873,7 @@ public class StreamGuardApp implements EntryPoint {
         if (screen.equals("studio")) loadDashboard(true);
       } else if (type.equals("queue-updated") && screen.equals("moderation")) loadDashboard(true);
       else if (type.equals("clips-updated")) {
-        toast("Hay un nuevo clip en tu biblioteca", false);
+        toast(UiText.get("uiRealtimeText119"), false);
         if (screen.equals("clips")) loadDashboard(true);
       } else if (type.equals("capture-status")) toast(text(e, "message"), bool(e, "error"));
     } catch (Exception ignored) {
@@ -922,20 +882,16 @@ public class StreamGuardApp implements EntryPoint {
 
   private void moderation() {
     title(
-        "CUIDA TU COMUNIDAD",
-        "Moderación",
-        "La IA detecta señales. Tú y tu equipo toman las decisiones que necesitan contexto.");
+        UiText.get("uiModerationText120"),
+        UiText.get("uiShellText10"),
+        UiText.get("uiModerationText122"));
     stats();
     content.add(aiStatus());
     JSONArray queue = arr(dash.get("queue"));
     FlowPanel list = panel("surface moderation-list");
-    list.add(
-        html(
-            "<div class='panel-heading'><h2>Mensajes por revisar</h2><span class='count-pill'>"
-                + queue.size()
-                + "</span></div>"));
+    list.add(html(UiText.get("uiModerationText123") + queue.size() + "</span></div>"));
     if (queue.size() == 0)
-      list.add(empty("Todo está al día", "Los mensajes que necesiten contexto aparecerán aquí."));
+      list.add(empty(UiText.get("uiModerationText124"), UiText.get("uiModerationText125")));
     for (int i = 0; i < queue.size(); i++) {
       JSONObject q = obj(queue.get(i));
       FlowPanel row = panel("review-row");
@@ -953,11 +909,19 @@ public class StreamGuardApp implements EntryPoint {
                   + esc(text(q, "reason"))
                   + "</p></div>"));
       FlowPanel actions = panel("action-row");
-      actions.add(button("Permitir", "button primary small", () -> reviewMessage(q, true)));
-      actions.add(button("Ocultar", "button danger small", () -> reviewMessage(q, false)));
       actions.add(
           button(
-              "Silenciar 5 min",
+              UiText.get("uiModerationText126"),
+              "button primary small",
+              () -> reviewMessage(q, true)));
+      actions.add(
+          button(
+              UiText.get("uiModerationText127"),
+              "button danger small",
+              () -> reviewMessage(q, false)));
+      actions.add(
+          button(
+              UiText.get("muteFiveMinutes"),
               "button subtle small",
               () ->
                   api(
@@ -971,9 +935,9 @@ public class StreamGuardApp implements EntryPoint {
                           "seconds",
                           300,
                           "reason",
-                          "Sanción aplicada por un moderador humano"),
+                          UiText.get("uiModerationText128")),
                       v -> {
-                        toast("Usuario silenciado durante 5 minutos", false);
+                        toast(UiText.get("uiModerationText129"), false);
                         loadDashboard(true);
                       })));
       row.add(actions);
@@ -983,8 +947,7 @@ public class StreamGuardApp implements EntryPoint {
     FlowPanel sanctions = panel("surface");
     sanctions.add(html("<div class='panel-heading'><h2>Sanciones activas</h2></div>"));
     JSONArray rows = arr(dash.get("sanctions"));
-    if (rows.size() == 0)
-      sanctions.add(html("<p class='muted padded'>No hay usuarios sancionados.</p>"));
+    if (rows.size() == 0) sanctions.add(html(UiText.get("uiModerationText130")));
     for (int i = 0; i < rows.size(); i++) {
       JSONObject s = obj(rows.get(i));
       FlowPanel row = panel("simple-row");
@@ -993,12 +956,14 @@ public class StreamGuardApp implements EntryPoint {
               "@"
                   + text(s, "username")
                   + " · "
-                  + (text(s, "type").equals("BAN") ? "Bloqueado" : "Silenciado")
+                  + (text(s, "type").equals("BAN")
+                      ? UiText.get("uiModerationText131")
+                      : UiText.get("uiModerationText132"))
                   + " · "
                   + text(s, "expires_at")));
       row.add(
           button(
-              "Retirar sanción",
+              UiText.get("uiModerationText133"),
               "button subtle small",
               () -> api("DELETE", "/sanctions/" + text(s, "id"), null, v -> loadDashboard(true))));
       sanctions.add(row);
@@ -1012,24 +977,19 @@ public class StreamGuardApp implements EntryPoint {
         "/moderation/" + text(row, "id") + "/review",
         object("approve", approve),
         v -> {
-          toast(approve ? "Mensaje aprobado" : "Mensaje ocultado", false);
+          toast(
+              approve ? UiText.get("uiReviewMessageText134") : UiText.get("uiReviewMessageText135"),
+              false);
           loadDashboard(true);
         });
   }
 
   private void clips() {
-    title(
-        "CONTENIDO QUE SIGUE VIVO",
-        "Tu biblioteca de clips",
-        "Revisa, edita y publica los momentos que quieres compartir.");
+    title(UiText.get("uiClipsText136"), UiText.get("uiClipsText137"), UiText.get("uiClipsText138"));
     JSONArray rows = arr(dash.get("clips"));
     FlowPanel grid = panel("clip-grid");
     if (rows.size() == 0)
-      grid.add(
-          empty(
-              "Tus mejores momentos vivirán aquí",
-              "Durante el directo, marca un momento o activa la detección automática en la"
-                  + " configuración."));
+      grid.add(empty(UiText.get("uiClipsText139"), UiText.get("uiClipsText140")));
     for (int i = 0; i < rows.size(); i++) grid.add(clipCard(obj(rows.get(i)), owner()));
     content.add(grid);
   }
@@ -1056,7 +1016,7 @@ public class StreamGuardApp implements EntryPoint {
     FlowPanel actions = panel("action-row clip-actions");
     actions.add(
         button(
-            "Ver video",
+            UiText.get("viewVideo"),
             "button subtle small",
             () ->
                 MediaBridge.playback(
@@ -1068,7 +1028,7 @@ public class StreamGuardApp implements EntryPoint {
                     })));
     actions.add(
         button(
-            "Descargar",
+            UiText.get("uiClipCardText141"),
             "button subtle small",
             () ->
                 MediaBridge.playback(
@@ -1079,18 +1039,27 @@ public class StreamGuardApp implements EntryPoint {
                       if (!e.isEmpty()) toast(e, true);
                     })));
     if (manage) {
-      actions.add(button("Editar", "button subtle small", () -> editClip(clip)));
-      actions.add(button("Publicar", "button primary small", () -> clipReview(clip, true)));
-      actions.add(button("Rechazar", "button danger small", () -> clipReview(clip, false)));
+      actions.add(
+          button(UiText.get("uiClipCardText142"), "button subtle small", () -> editClip(clip)));
+      actions.add(
+          button(
+              UiText.get("uiClipCardText143"),
+              "button primary small",
+              () -> clipReview(clip, true)));
+      actions.add(
+          button(
+              UiText.get("uiClipCardText144"),
+              "button danger small",
+              () -> clipReview(clip, false)));
     }
     if (text(clip, "status").equals("APPROVED"))
       actions.add(
           button(
-              "Compartir",
+              UiText.get("uiClipCardText145"),
               "button subtle small",
               () -> {
                 MediaBridge.share(asset, text(clip, "title"));
-                toast("Enlace listo para compartir", false);
+                toast(UiText.get("uiClipCardText146"), false);
               }));
     card.add(actions);
     return card;
@@ -1102,37 +1071,34 @@ public class StreamGuardApp implements EntryPoint {
         "/clips/" + text(clip, "id") + "/review",
         object("approve", approve),
         v -> {
-          toast(approve ? "Clip publicado" : "Clip rechazado", false);
+          toast(approve ? UiText.get("clipPublished") : UiText.get("clipRejected"), false);
           loadDashboard(true);
         });
   }
 
   private void editClip(JSONObject clip) {
     DialogBox dialog = new DialogBox();
-    dialog.setText("Editar clip");
+    dialog.setText(UiText.get("editClip"));
     dialog.setGlassEnabled(true);
     FlowPanel form = panel("dialog-form");
-    TextBox title = input("Título", text(clip, "title"));
-    TextArea desc = area("Descripción", text(clip, "description"));
+    TextBox title = input(UiText.get("uiEditClipText147"), text(clip, "title"));
+    TextArea desc = area(UiText.get("uiCreateChannelText64"), text(clip, "description"));
     TextBox start = input("0", "0"),
         end =
             input(
-                "Fin",
+                UiText.get("uiEditClipText149"),
                 Integer.toString(
                     (int) (number(clip, "end_seconds") - number(clip, "start_seconds"))));
-    form.add(field("Título", title));
-    form.add(field("Descripción", desc));
-    form.add(
-        html(
-            "<p class='muted'>Recorta usando segundos relativos al inicio del video. Tras editar,"
-                + " el clip vuelve a quedar pendiente de aprobación.</p>"));
+    form.add(field(UiText.get("uiEditClipText147"), title));
+    form.add(field(UiText.get("uiCreateChannelText64"), desc));
+    form.add(html(UiText.get("uiEditClipText152")));
     FlowPanel row = panel("form-row");
-    row.add(field("Desde (segundos)", start));
-    row.add(field("Hasta (segundos)", end));
+    row.add(field(UiText.get("trimStart"), start));
+    row.add(field(UiText.get("trimEnd"), end));
     form.add(row);
     form.add(
         button(
-            "Guardar cambios",
+            UiText.get("saveChanges"),
             "button primary",
             () -> {
               try {
@@ -1153,10 +1119,10 @@ public class StreamGuardApp implements EntryPoint {
                       loadDashboard(true);
                     });
               } catch (Exception e) {
-                toast("Ingresa segundos válidos", true);
+                toast(UiText.get("uiEditClipText153"), true);
               }
             }));
-    form.add(button("Cancelar", "button subtle", dialog::hide));
+    form.add(button(UiText.get("uiEditClipText154"), "button subtle", dialog::hide));
     dialog.setWidget(form);
     dialog.center();
     title.setFocus(true);
@@ -1164,9 +1130,9 @@ public class StreamGuardApp implements EntryPoint {
 
   private void publicClips() {
     title(
-        "MOMENTOS DE LA COMUNIDAD",
-        "Una buena historia sigue aquí",
-        "Clips revisados y publicados por sus creadores.");
+        UiText.get("uiPublicClipsText155"),
+        UiText.get("uiPublicClipsText156"),
+        UiText.get("uiPublicClipsText157"));
     FlowPanel grid = panel("clip-grid");
     content.add(grid);
     api(
@@ -1176,10 +1142,7 @@ public class StreamGuardApp implements EntryPoint {
         v -> {
           JSONArray rows = arr(v);
           if (rows.size() == 0)
-            grid.add(
-                empty(
-                    "Todavía no hay clips publicados",
-                    "Vuelve cuando los creadores compartan sus primeros momentos."));
+            grid.add(empty(UiText.get("uiPublicClipsText158"), UiText.get("uiPublicClipsText159")));
           for (int i = 0; i < rows.size(); i++) grid.add(clipCard(obj(rows.get(i)), false));
           String hash = MediaBridge.hash();
           if (hash.startsWith("#clip=")) {
@@ -1201,21 +1164,18 @@ public class StreamGuardApp implements EntryPoint {
 
   private void assistant() {
     title(
-        "UNA MIRADA EXTRA",
-        "Tu asistente IA",
-        "Convierte la conversación y las transcripciones en contexto para tu contenido.");
+        UiText.get("uiAssistantText160"),
+        UiText.get("uiAssistantText161"),
+        UiText.get("uiAssistantText162"));
     content.add(aiStatus());
     JSONObject latest = obj(dash.get("stream"));
     if (text(latest, "id").isEmpty()) {
-      content.add(
-          empty(
-              "Primero, una conversación",
-              "Realiza un directo para generar un resumen, temas y preguntas frecuentes."));
+      content.add(empty(UiText.get("uiAssistantText163"), UiText.get("uiAssistantText164")));
       return;
     }
     content.add(
         button(
-            "Generar análisis de la última transmisión",
+            UiText.get("uiAssistantText165"),
             "button primary",
             () ->
                 api(
@@ -1223,24 +1183,22 @@ public class StreamGuardApp implements EntryPoint {
                     "/streams/" + text(latest, "id") + "/summary",
                     new JSONObject(),
                     v -> {
-                      toast("Análisis guardado · " + providerName(text(obj(v), "provider")), false);
+                      toast(
+                          UiText.get("uiAssistantText166") + providerName(text(obj(v), "provider")),
+                          false);
                       loadDashboard(true);
                     })));
     JSONObject ai = obj(dash.get("ai"));
     JSONArray summaries = arr(ai.get("summaries"));
     FlowPanel surface = panel("surface assistant-summary");
-    surface.add(
-        html(
-            "<div class='panel-heading'><h2>Resumen de la transmisión</h2>"
-                + icon("spark")
-                + "</div>"));
+    surface.add(html(UiText.get("uiAssistantText167") + icon("spark") + "</div>"));
     surface.add(
         html(
             "<p class='summary-text'>"
                 + esc(
                     summaries.size() > 0
                         ? text(obj(summaries.get(0)), "content")
-                        : "Aún no has generado un resumen de esta transmisión.")
+                        : UiText.get("uiAssistantText168"))
                 + "</p>"));
     JSONArray topics = arr(ai.get("topics"));
     FlowPanel tags = panel("category-row");
@@ -1251,10 +1209,9 @@ public class StreamGuardApp implements EntryPoint {
     surface.add(tags);
     content.add(surface);
     FlowPanel faqs = panel("surface assistant-summary");
-    faqs.add(html("<div class='panel-heading'><h2>Preguntas del chat</h2></div>"));
+    faqs.add(html(UiText.get("uiAssistantText169")));
     JSONArray faq = arr(ai.get("faqs"));
-    if (faq.size() == 0)
-      faqs.add(html("<p class='muted padded'>Aún no hay preguntas frecuentes identificadas.</p>"));
+    if (faq.size() == 0) faqs.add(html(UiText.get("uiAssistantText170")));
     for (int i = 0; i < faq.size(); i++) {
       JSONObject f = obj(faq.get(i));
       faqs.add(
@@ -1266,44 +1223,31 @@ public class StreamGuardApp implements EntryPoint {
                   + "</p></article>"));
     }
     content.add(faqs);
-    content.add(
-        html(
-            "<p class='muted'>El análisis usa mensajes visibles, marcadores y transcripciones"
-                + " disponibles. Su alcance depende del contexto registrado.</p>"));
+    content.add(html(UiText.get("uiAssistantText171")));
   }
 
   private void settings() {
     title(
-        "LAS REGLAS LAS PONES TÚ",
-        "Configuración del canal",
-        "Ajusta el apoyo de moderación a la comunidad que quieres construir.");
+        UiText.get("uiSettingsText172"),
+        UiText.get("uiSettingsText173"),
+        UiText.get("uiSettingsText174"));
     if (!owner()) {
-      content.add(
-          empty(
-              "Configuración del propietario",
-              "Los moderadores pueden revisar mensajes y sanciones. El creador define las reglas"
-                  + " del canal."));
+      content.add(empty(UiText.get("uiSettingsText175"), UiText.get("uiSettingsText176")));
       return;
     }
     JSONObject p = obj(dash.get("policy")), s = obj(dash.get("settings"));
     FlowPanel form = panel("surface settings-form");
     ListBox level = new ListBox();
-    level.addItem("Relajado", "RELAXED");
-    level.addItem("Equilibrado", "BALANCED");
-    level.addItem("Estricto", "STRICT");
+    level.addItem(UiText.get("uiSettingsText177"), "RELAXED");
+    level.addItem(UiText.get("uiSettingsText178"), "BALANCED");
+    level.addItem(UiText.get("uiSettingsText179"), "STRICT");
     for (int i = 0; i < level.getItemCount(); i++)
       if (level.getValue(i).equals(text(p, "level"))) level.setSelectedIndex(i);
-    form.add(field("Nivel de moderación", level));
-    CheckBox
-        hide =
-            check(
-                "Ocultar automáticamente las infracciones de alta confianza", bool(p, "autoHide")),
-        mute =
-            check(
-                "Silenciar temporalmente al autor cuando se oculta una infracción",
-                bool(p, "autoMute")),
-        links = check("Permitir enlaces en el chat", bool(p, "allowLinks")),
-        auto = check("Detectar momentos por aumentos del chat y del audio", bool(s, "auto_clips"));
+    form.add(field(UiText.get("uiSettingsText180"), level));
+    CheckBox hide = check(UiText.get("uiSettingsText181"), bool(p, "autoHide")),
+        mute = check(UiText.get("uiSettingsText182"), bool(p, "autoMute")),
+        links = check(UiText.get("uiSettingsText183"), bool(p, "allowLinks")),
+        auto = check(UiText.get("uiSettingsText184"), bool(s, "auto_clips"));
     form.add(hide);
     form.add(mute);
     form.add(links);
@@ -1311,16 +1255,16 @@ public class StreamGuardApp implements EntryPoint {
     TextBox seconds = input("300", text(p, "muteSeconds")),
         slow = input("0", text(s, "slow_mode_seconds"));
     FlowPanel row = panel("form-row");
-    row.add(field("Duración del silencio (segundos)", seconds));
-    row.add(field("Modo lento del chat (0–120 segundos)", slow));
+    row.add(field(UiText.get("uiSettingsText185"), seconds));
+    row.add(field(UiText.get("uiSettingsText186"), slow));
     form.add(row);
-    TextArea words = area("Una palabra o frase por línea", join(arr(p.get("blockedWords")))),
-        topics = area("Un tema por línea", join(arr(p.get("blockedTopics"))));
-    form.add(field("Palabras restringidas", words));
-    form.add(field("Temas restringidos · requieren análisis con Gemini", topics));
+    TextArea words = area(UiText.get("uiSettingsText187"), join(arr(p.get("blockedWords")))),
+        topics = area(UiText.get("uiSettingsText188"), join(arr(p.get("blockedTopics"))));
+    form.add(field(UiText.get("restrictedWords"), words));
+    form.add(field(UiText.get("uiSettingsText189"), topics));
     form.add(
         button(
-            "Guardar configuración",
+            UiText.get("uiSettingsText190"),
             "button primary",
             () -> {
               try {
@@ -1359,24 +1303,21 @@ public class StreamGuardApp implements EntryPoint {
                     "/channels/" + channel + "/policy",
                     body,
                     v -> {
-                      toast("Configuración guardada", false);
+                      toast(UiText.get("uiSettingsText191"), false);
                       loadDashboard(true);
                     });
               } catch (Exception e) {
-                toast("Revisa los campos numéricos", true);
+                toast(UiText.get("uiSettingsText192"), true);
               }
             }));
     content.add(form);
     FlowPanel mods = panel("surface settings-form");
-    mods.add(
-        html(
-            "<h2>Tu equipo de moderación</h2><p class='muted'>Invita a usuarios que ya tengan"
-                + " cuenta en StreamGuard.</p>"));
-    TextBox name = input("Nombre de usuario", "");
-    mods.add(field("Usuario", name));
+    mods.add(html(UiText.get("uiSettingsText193")));
+    TextBox name = input(UiText.get("uiAuthViewText45"), "");
+    mods.add(field(UiText.get("uiSettingsText195"), name));
     mods.add(
         button(
-            "Agregar moderador",
+            UiText.get("addModerator"),
             "button subtle",
             () ->
                 api(
@@ -1391,7 +1332,7 @@ public class StreamGuardApp implements EntryPoint {
       r.add(new Label("@" + text(mod, "username")));
       r.add(
           button(
-              "Retirar",
+              UiText.get("uiSettingsText196"),
               "button danger small",
               () ->
                   api(
@@ -1407,17 +1348,17 @@ public class StreamGuardApp implements EntryPoint {
   private void notifications() {
     DialogBox dialog = new DialogBox();
     dialog.setGlassEnabled(true);
-    dialog.setText("Tus avisos");
+    dialog.setText(UiText.get("uiNotificationsText197"));
     FlowPanel list = panel("dialog-form");
     dialog.setWidget(list);
-    list.add(button("Cerrar", "button subtle", dialog::hide));
+    list.add(button(UiText.get("uiNotificationsText198"), "button subtle", dialog::hide));
     api(
         "GET",
         "/notifications",
         null,
         v -> {
           JSONArray rows = arr(v);
-          if (rows.size() == 0) list.add(new Label("Todavía no tienes avisos."));
+          if (rows.size() == 0) list.add(new Label(UiText.get("uiNotificationsText199")));
           for (int i = 0; i < rows.size(); i++) {
             JSONObject n = obj(rows.get(i));
             list.add(
@@ -1434,10 +1375,10 @@ public class StreamGuardApp implements EntryPoint {
   }
 
   private void account() {
-    title("TU PERFIL", "@" + text(user, "username"), text(user, "email"));
+    title(UiText.get("uiAccountText200"), "@" + text(user, "username"), text(user, "email"));
     content.add(
         button(
-            "Cambiar canal de administración",
+            UiText.get("uiAccountText201"),
             "button subtle",
             () -> {
               channel = "";
@@ -1445,7 +1386,7 @@ public class StreamGuardApp implements EntryPoint {
             }));
     content.add(
         button(
-            "Cerrar sesión",
+            UiText.get("uiAccountText202"),
             "button danger",
             () -> {
               Runnable logout =
@@ -1479,12 +1420,9 @@ public class StreamGuardApp implements EntryPoint {
             + "'>"
             + icon("spark")
             + "<div><strong>"
-            + (gemini ? "Gemini está conectado" : "Reglas locales activas")
+            + (gemini ? UiText.get("uiAiStatusText203") : UiText.get("uiAiStatusText204"))
             + "</strong><p>"
-            + (gemini
-                ? "Análisis semántico y apoyo editorial disponibles."
-                : "Gemini aún no está configurado. Las palabras restringidas, los enlaces y el"
-                      + " control de repetición siguen funcionando.")
+            + (gemini ? UiText.get("uiAiStatusText205") : UiText.get("uiAiStatusText206"))
             + "</p></div></div>");
   }
 
@@ -1645,17 +1583,25 @@ public class StreamGuardApp implements EntryPoint {
   }
 
   private static String levelName(String s) {
-    return s.equals("STRICT") ? "estricto" : s.equals("RELAXED") ? "relajado" : "equilibrado";
+    return s.equals("STRICT")
+        ? UiText.get("uiLevelNameText207")
+        : s.equals("RELAXED") ? UiText.get("uiLevelNameText208") : UiText.get("uiLevelNameText209");
   }
 
   private static String providerName(String s) {
     return s.equals("GEMINI")
         ? "Gemini"
-        : s.equals("UNAVAILABLE") ? "IA no disponible" : "Reglas locales";
+        : s.equals("UNAVAILABLE")
+            ? UiText.get("uiProviderNameText210")
+            : UiText.get("uiProviderNameText211");
   }
 
   private static String statusName(String s) {
-    return s.equals("APPROVED") ? "Publicado" : s.equals("REJECTED") ? "Rechazado" : "Por revisar";
+    return s.equals("APPROVED")
+        ? UiText.get("uiStatusNameText212")
+        : s.equals("REJECTED")
+            ? UiText.get("uiStatusNameText213")
+            : UiText.get("uiStatusNameText214");
   }
 
   private static String icon(String key) {

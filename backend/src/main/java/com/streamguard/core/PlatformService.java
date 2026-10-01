@@ -1,5 +1,6 @@
 package com.streamguard.core;
 
+import com.streamguard.i18n.Messages;
 import com.streamguard.live.LiveHub;
 import com.streamguard.patterns.ModerationPolicy;
 import java.util.*;
@@ -35,7 +36,7 @@ public class PlatformService {
 
   public void owner(UUID channel, UUID user) {
     if (db.count("SELECT count(*) FROM channels WHERE id=? AND owner_id=?", channel, user) == 0)
-      throw new ApiError(403, "Esta acción corresponde al propietario del canal");
+      throw new ApiError(403, Messages.text("platformServiceOwnerText01"));
   }
 
   public void manager(UUID channel, UUID user) {
@@ -45,7 +46,7 @@ public class PlatformService {
             channel,
             user,
             user)
-        == 0) throw new ApiError(403, "No tienes permiso de moderación en este canal");
+        == 0) throw new ApiError(403, Messages.text("platformServiceManagerText02"));
   }
 
   @Transactional
@@ -89,7 +90,8 @@ public class PlatformService {
     owner(Db.id(row.get("channel_id")), user);
     db.exec(
         "UPDATE streams SET status='ENDED',ended_at=now() WHERE id=? AND status='LIVE'", stream);
-    hub.broadcast(stream, Map.of("type", "ended", "message", "La transmisión terminó"));
+    hub.broadcast(
+        stream, Map.of("type", "ended", "message", Messages.text("clipServiceHighlightText01")));
   }
 
   public List<Map<String, Object>> explore(String search, String category) {
@@ -139,7 +141,8 @@ public class PlatformService {
   public void savePolicy(
       UUID channel, UUID user, ModerationPolicy p, int slowMode, boolean autoClips) {
     owner(channel, user);
-    if (slowMode < 0 || slowMode > 120) throw new ApiError(400, "Modo lento inválido");
+    if (slowMode < 0 || slowMode > 120)
+      throw new ApiError(400, Messages.text("platformServiceSavePolicyText04"));
     db.exec(
         "UPDATE moderation_policies SET"
             + " level=?,auto_hide=?,auto_mute=?,mute_seconds=?,review_threshold=?,block_threshold=?"
@@ -162,7 +165,7 @@ public class PlatformService {
     db.exec("DELETE FROM blocked_topics WHERE channel_id=?", channel);
     for (String word : p.blockedWords()) {
       if (word.isBlank() || word.length() > 80)
-        throw new ApiError(400, "Palabra restringida inválida");
+        throw new ApiError(400, Messages.text("platformServiceSavePolicyText05"));
       db.exec(
           "INSERT INTO blocked_words(channel_id,word) VALUES (?,?) ON CONFLICT DO NOTHING",
           channel,
@@ -170,7 +173,7 @@ public class PlatformService {
     }
     for (String topic : p.blockedTopics()) {
       if (topic.isBlank() || topic.length() > 120)
-        throw new ApiError(400, "Tema restringido inválido");
+        throw new ApiError(400, Messages.text("platformServiceSavePolicyText06"));
       db.exec(
           "INSERT INTO blocked_topics(channel_id,topic) VALUES (?,?) ON CONFLICT DO NOTHING",
           channel,
@@ -266,7 +269,9 @@ public class PlatformService {
         db.exec(
             "UPDATE streams SET status='ENDED',ended_at=now() WHERE id=? AND status='LIVE'",
             stream);
-        hub.broadcast(stream, Map.of("type", "ended", "message", "El emisor está desconectado"));
+        hub.broadcast(
+            stream,
+            Map.of("type", "ended", "message", Messages.text("platformServiceSampleText07")));
         continue;
       }
       db.exec(

@@ -63,11 +63,11 @@ class PlatformIntegrationTest {
             "/channels",
             Map.of(
                 "name",
-                "Canal de pruebas",
+                TestFixtures.text("platformIntegrationTestText01"),
                 "slug",
                 u.username(),
                 "description",
-                "Prueba real de integración"),
+                TestFixtures.text("platformIntegrationTestText02")),
             u.token());
     assertEquals(200, r.getStatusCode().value());
     return r.getBody().get("id").toString();
@@ -78,7 +78,7 @@ class PlatformIntegrationTest {
         call(
             HttpMethod.POST,
             "/streams",
-            Map.of("title", "Directo de pruebas", "description", ""),
+            Map.of("title", TestFixtures.text("platformIntegrationTestText03"), "description", ""),
             u.token());
     assertEquals(200, r.getStatusCode().value());
     return r.getBody().get("id").toString();
@@ -134,6 +134,36 @@ class PlatformIntegrationTest {
   }
 
   @Test
+  void channelValidationReturnsSpanishWithoutExposingInternalFieldNames() {
+    User owner = user();
+    var response =
+        call(
+            HttpMethod.POST,
+            "/channels",
+            Map.of("name", "Validation sample", "slug", "Uppercase", "description", "Sample"),
+            owner.token());
+    assertEquals(400, response.getStatusCode().value());
+    assertEquals(
+        com.streamguard.i18n.Messages.text("fieldSlug")
+            + ": "
+            + com.streamguard.i18n.Messages.text("validationSlug"),
+        response.getBody().get("error"));
+    assertFalse(response.getBody().get("error").toString().contains("slug"));
+    var blank =
+        call(
+            HttpMethod.POST,
+            "/channels",
+            Map.of("name", "", "slug", owner.username(), "description", "Sample"),
+            owner.token());
+    assertEquals(400, blank.getStatusCode().value());
+    assertEquals(
+        com.streamguard.i18n.Messages.text("fieldName")
+            + ": "
+            + com.streamguard.i18n.Messages.text("validationRequired"),
+        blank.getBody().get("error"));
+  }
+
+  @Test
   void ownerRulesModerationReviewAndSanctionsWorkEndToEnd() {
     User owner = user(), viewer = user(), moderator = user(), stranger = user();
     String c = channel(owner), s = stream(owner);
@@ -145,7 +175,7 @@ class PlatformIntegrationTest {
             Map.entry("muteSeconds", 300),
             Map.entry("reviewThreshold", .4),
             Map.entry("blockThreshold", .7),
-            Map.entry("blockedWords", List.of("prohibido")),
+            Map.entry("blockedWords", List.of(TestFixtures.text("platformIntegrationTestText04"))),
             Map.entry("blockedTopics", List.of()),
             Map.entry("allowLinks", false),
             Map.entry("slowMode", 0),
@@ -169,14 +199,14 @@ class PlatformIntegrationTest {
         call(
             HttpMethod.POST,
             "/streams/" + s + "/messages",
-            Map.of("content", "Hola comunidad"),
+            Map.of("content", TestFixtures.text("platformIntegrationTestText05")),
             viewer.token());
     assertEquals("VISIBLE", visible.getBody().get("status"));
     var hidden =
         call(
             HttpMethod.POST,
             "/streams/" + s + "/messages",
-            Map.of("content", "prohibido"),
+            Map.of("content", TestFixtures.text("platformIntegrationTestText06")),
             stranger.token());
     assertEquals("HIDDEN", hidden.getBody().get("status"));
     var queue =
@@ -239,7 +269,7 @@ class PlatformIntegrationTest {
                     "seconds",
                     300,
                     "reason",
-                    "Prueba de silencio"),
+                    TestFixtures.text("platformIntegrationTestText07")),
                 moderator.token())
             .getStatusCode()
             .value());
@@ -248,7 +278,7 @@ class PlatformIntegrationTest {
         call(
                 HttpMethod.POST,
                 "/streams/" + s + "/messages",
-                Map.of("content", "No debe pasar"),
+                Map.of("content", TestFixtures.text("platformIntegrationTestText08")),
                 viewer.token())
             .getStatusCode()
             .value());
@@ -275,7 +305,7 @@ class PlatformIntegrationTest {
         call(
                 HttpMethod.POST,
                 "/streams/" + s + "/messages",
-                Map.of("content", "El directo terminó"),
+                Map.of("content", TestFixtures.text("platformIntegrationTestText09")),
                 viewer.token())
             .getStatusCode()
             .value());
@@ -298,7 +328,11 @@ class PlatformIntegrationTest {
         call(
                 HttpMethod.POST,
                 "/streams/" + s + "/highlights",
-                Map.of("source", "MANUAL", "reason", "Prueba de clip"),
+                Map.of(
+                    "source",
+                    "MANUAL",
+                    "reason",
+                    TestFixtures.text("platformIntegrationTestText10")),
                 owner.token())
             .getBody()
             .get("id")
@@ -374,7 +408,15 @@ class PlatformIntegrationTest {
         call(
             HttpMethod.PUT,
             "/clips/" + clipId,
-            Map.of("title", "Clip recortado", "description", "Edición real", "start", .5, "end", 2),
+            Map.of(
+                "title",
+                "Clip recortado",
+                "description",
+                TestFixtures.text("platformIntegrationTestText11"),
+                "start",
+                .5,
+                "end",
+                2),
             owner.token());
     assertEquals(200, edit.getStatusCode().value());
     assertEquals("PENDING", edit.getBody().get("status"));
