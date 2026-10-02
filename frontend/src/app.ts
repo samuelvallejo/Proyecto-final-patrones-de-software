@@ -399,12 +399,13 @@ export class StreamGuardApp {
     }));
   }
   private aiStatus(): HTMLDivElement {
-    const gemini = flag(this.config, 'geminiConfigured');
-    return html(`<div class="info-banner${gemini ? ' success-banner' : ''}">${icon('spark')}<div><strong>${gemini ? t('uiAiStatusText203') : t('uiAiStatusText204')}</strong><p>${gemini ? t('uiAiStatusText205') : t('uiAiStatusText206')}</p></div></div>`);
+    const configured = flag(this.config, 'aiConfigured');
+    const localModel = text(this.config, 'aiMode') === 'OLLAMA';
+    return html(`<div class="info-banner${configured ? ' success-banner' : ''}">${icon('spark')}<div><strong>${configured ? (localModel ? t('localAiConfigured') : t('uiAiStatusText203')) : t('uiAiStatusText204')}</strong><p>${configured ? (localModel ? t('localAiAvailability') : t('uiAiStatusText205')) : t('uiAiStatusText206')}</p></div></div>`);
   }
 }
 function stringList(value: Json | undefined): string[] {return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];}
 function lines(value: string): string[] {return value.split('\n').map(item => item.trim()).filter(Boolean);}
 function levelName(level: string): string {return level === 'STRICT' ? t('uiLevelNameText207') : level === 'RELAXED' ? t('uiLevelNameText208') : t('uiLevelNameText209');}
-function providerName(provider: string): string {return provider === 'GEMINI' ? 'Gemini' : provider === 'UNAVAILABLE' ? t('uiProviderNameText210') : t('uiProviderNameText211');}
+function providerName(provider: string): string {return provider === 'OLLAMA' ? t('localAiProvider') : provider === 'GEMINI' ? 'Gemini' : provider === 'UNAVAILABLE' ? t('uiProviderNameText210') : t('uiProviderNameText211');}
 function statusName(status: string): string {return status === 'APPROVED' ? t('uiStatusNameText212') : status === 'REJECTED' ? t('uiStatusNameText213') : t('uiStatusNameText214');}

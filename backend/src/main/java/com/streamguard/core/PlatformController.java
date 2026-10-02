@@ -109,9 +109,13 @@ public class PlatformController {
       servers.add(Map.of("urls", turnUrl, "username", turnUser, "credential", turnPassword));
     return Map.of(
         "geminiConfigured",
+        ai.provider().equals("GEMINI") && ai.configured(),
+        "aiConfigured",
         ai.configured(),
+        "aiModel",
+        ai.model(),
         "aiMode",
-        ai.configured() ? "GEMINI" : "LOCAL_RULES",
+        ai.provider(),
         "maxViewers",
         maxViewers,
         "iceServers",

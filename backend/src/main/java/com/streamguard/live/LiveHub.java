@@ -4,13 +4,13 @@ import com.fasterxml.jackson.databind.*;
 import com.streamguard.auth.AuthService;
 import com.streamguard.core.*;
 import com.streamguard.i18n.Messages;
+import jakarta.annotation.PreDestroy;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
@@ -20,14 +20,21 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 /** Authenticated signaling only; media travels peer-to-peer, never through this socket. */
 @Component
 public class LiveHub extends TextWebSocketHandler {
+  private static final class HostAlreadyOnline extends ApiError {
+    HostAlreadyOnline() {
+      super(409, Messages.text("liveHubHandleTextMessageText04"));
+    }
+  }
+
   private final Db db;
   private final AuthService auth;
   private final ObjectMapper json;
   private final int maxViewers;
   private final Map<String, Peer> peers = new ConcurrentHashMap<>();
   private final Map<UUID, Room> rooms = new ConcurrentHashMap<>();
-  private final ScheduledExecutorService disconnects = Executors.newSingleThreadScheduledExecutor(
-      Thread.ofPlatform().daemon().name("host-disconnect").factory());
+  private final ScheduledExecutorService disconnects =
+      Executors.newSingleThreadScheduledExecutor(
+          Thread.ofPlatform().daemon().name("host-disconnect").factory());
 
   private record Peer(
       WebSocketSession socket,
@@ -88,8 +95,7 @@ public class LiveHub extends TextWebSocketHandler {
                             user)
                         > 0);
         Room room = rooms.computeIfAbsent(stream, k -> new Room());
-        if (host && room.host != null)
-          throw new ApiError(409, Messages.text("liveHubHandleTextMessageText04"));
+        if (host && room.host != null) throw new HostAlreadyOnline();
         if (!host && room.viewers.size() >= maxViewers)
           throw new ApiError(429, Messages.text("liveHubHandleTextMessageText05"));
         var wrapped = new ConcurrentWebSocketSessionDecorator(socket, 10000, 256 * 1024);
@@ -103,10 +109,12 @@ public class LiveHub extends TextWebSocketHandler {
                     user);
         peers.put(socket.getId(), new Peer(wrapped, stream, user, host, moderator, view));
         if (host) {
-          if (room.expiry != null) { room.expiry.cancel(false); room.expiry = null; }
+          if (room.expiry != null) {
+            room.expiry.cancel(false);
+            room.expiry = null;
+          }
           room.host = socket.getId();
-        }
-        else room.viewers.add(socket.getId());
+        } else room.viewers.add(socket.getId());
         send(
             wrapped,
             Map.of(
@@ -159,7 +167,9 @@ public class LiveHub extends TextWebSocketHandler {
               "message",
               e instanceof ApiError
                   ? e.getMessage()
-                  : Messages.text("liveHubHandleTextMessageText08")));
+                  : Messages.text("liveHubHandleTextMessageText08"),
+              "retryable",
+              e instanceof HostAlreadyOnline));
     }
   }
 
@@ -175,26 +185,33 @@ public class LiveHub extends TextWebSocketHandler {
     if (peer.host()) {
       room.host = null;
       // Keep short network interruptions from ending a broadcast before the owner reconnects.
-      room.expiry = disconnects.schedule(() -> expireHost(peer.stream(), room), 45, TimeUnit.SECONDS);
+      room.expiry =
+          disconnects.schedule(() -> expireHost(peer.stream(), room), 45, TimeUnit.SECONDS);
     } else if (room.host != null && peers.containsKey(room.host))
       send(peers.get(room.host).socket(), Map.of("type", "viewer-left", "peerId", socket.getId()));
     broadcast(
         peer.stream(),
         Map.of(
             "type", "presence", "viewers", room.viewers.size(), "hostOnline", room.host != null));
-    if (room.host == null && room.expiry == null && room.viewers.isEmpty()) rooms.remove(peer.stream());
+    if (room.host == null && room.expiry == null && room.viewers.isEmpty())
+      rooms.remove(peer.stream());
   }
 
   private synchronized void expireHost(UUID stream, Room room) {
     if (rooms.get(stream) != room || room.host != null) return;
     room.expiry = null;
-    db.exec("UPDATE streams SET status='ENDED',ended_at=now() WHERE id=? AND status='LIVE'", stream);
-    broadcast(stream, Map.of("type", "ended", "message", Messages.text("liveHubAfterConnectionClosedText09")));
+    db.exec(
+        "UPDATE streams SET status='ENDED',ended_at=now() WHERE id=? AND status='LIVE'", stream);
+    broadcast(
+        stream,
+        Map.of("type", "ended", "message", Messages.text("liveHubAfterConnectionClosedText09")));
     if (room.viewers.isEmpty()) rooms.remove(stream);
   }
 
   @PreDestroy
-  void close() { disconnects.shutdownNow(); }
+  void close() {
+    disconnects.shutdownNow();
+  }
 
   public int viewers(UUID stream) {
     Room r = rooms.get(stream);

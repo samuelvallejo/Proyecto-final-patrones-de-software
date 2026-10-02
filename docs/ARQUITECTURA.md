@@ -8,7 +8,9 @@ flowchart LR
     F -->|HTTPS JSON| B[Backend Java 21 Spring Boot\nRender Free]
     F <-->|WSS: chat, señalización y eventos| B
     B -->|JDBC y Flyway| D[(PostgreSQL\n65 tablas)]
-    B -->|HTTPS y clave privada| G[API Gemini]
+    B -->|HTTPS y Bearer privado| N[ngrok]
+    N --> G[Pasarela Java local]
+    G --> O[Ollama / Qwen3:4b]
     B --> M[FFmpeg y archivos temporales]
     F <-->|WebRTC audio y video| V[Otro navegador]
 ```
@@ -17,7 +19,7 @@ La UI y sus eventos están escritos en `frontend/src/app.ts`. `api.ts` administr
 
 El frontend usa TypeScript estricto, módulos de navegador y DOM nativo. `npm run build` verifica los tipos de la UI y del worker, valida los catálogos y compila con Vite. Maven construye únicamente el backend. La migración del cliente conserva los endpoints, tokens, permisos y las migraciones PostgreSQL existentes.
 
-El backend administra autenticación, autorización por canal, persistencia, moderación y flujos de IA. El frontend no consulta PostgreSQL ni llama a Gemini. En cloud, PostgreSQL conserva los bytes y los metadatos de los clips. El disco temporal del backend se reconstruye al reproducirlos.
+El backend administra autenticación, autorización por canal, persistencia, moderación y flujos de IA. El frontend no consulta PostgreSQL ni llama al modelo. En cloud, PostgreSQL conserva los bytes y los metadatos de los clips. El disco temporal del backend se reconstruye al reproducirlos. La IA funciona en el computador del propietario; la pasarela local fija el modelo y protege la inferencia con una clave independiente del authtoken de ngrok.
 
 ## Mensaje de chat
 

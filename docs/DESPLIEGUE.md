@@ -38,17 +38,21 @@ Se inicializó el snapshot exacto V1/V2. El perfil `cloud` reconoce esa base com
 | `JDBC_DATABASE_URL` | `jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require` |
 | `PGUSER` | `streamguard_backend.jegiuidrxxyijutqoowd` |
 | `PGPASSWORD` | Contraseña privada del rol |
-| `FRONTEND_ORIGIN` | `https://streamguard-delta.vercel.app` |
+| `FRONTEND_ORIGIN` | `https://streamguard-delta.vercel.app,https://streamguard-samuel-261002.web.app,https://streamguard-samuel-261002.firebaseapp.com` |
 | `MEDIA_STORAGE` | `database` |
 | `MEDIA_DIR` | `/tmp/streamguard/media` |
 | `MEDIA_WORK_DIR` | `/tmp/streamguard/work` |
 | `JAVA_TOOL_OPTIONS` | `-XX:MaxRAMPercentage=50 -XX:ActiveProcessorCount=1` |
 | `MAX_VIEWERS` | `6` |
-| `GEMINI_API_KEY` | Clave privada opcional hasta activar Gemini |
+| `AI_PROVIDER` | `ollama` |
+| `OLLAMA_GATEWAY_URL` | Origen HTTPS de ngrok |
+| `OLLAMA_GATEWAY_TOKEN` | Clave privada de la pasarela local, distinta del authtoken de ngrok |
+| `OLLAMA_MODEL` | `qwen3:4b` |
 
 6. Despliega. Docker instala FFmpeg y construye el JAR Java 21. Spring escucha en `PORT`, asignado por Render.
 7. Espera a que el servicio indique **Live** y `/actuator/health` responda `{"status":"UP"}`.
 8. Copia el origen HTTPS definitivo de Render para `PUBLIC_API_URL` en Vercel; sin `/api`, rutas ni barra final.
+9. Inicia la IA en el computador del propietario según [IA_LOCAL.md](IA_LOCAL.md). Después de subir cambios a la rama pública, usa **Manual Deploy → Deploy latest commit** si el repositorio no tiene un proveedor Git autorizado para despliegue automático.
 
 `render.yaml` documenta la misma configuración para un Blueprint. Completa allí las variables con `sync: false`. El plan Free pierde los archivos locales al reiniciarse: `media_asset_contents` conserva los clips en PostgreSQL y FFmpeg usa archivos temporales. Cada clip admite hasta 30 MiB. Los clips comparten la cuota de la base; este almacenamiento está pensado para la demostración académica.
 
@@ -64,11 +68,11 @@ Render Free puede dormir tras 15 minutos sin tráfico y tardar alrededor de un m
 
 Vercel recibe solamente el origen público del backend. No añadas `PGPASSWORD` ni `GEMINI_API_KEY`. Si cambias `PUBLIC_API_URL`, vuelve a compilar. Si cambias el dominio frontend, ajusta `FRONTEND_ORIGIN` en Render al origen exacto; los orígenes adicionales se separan por comas. [Compilaciones Vercel](https://vercel.com/docs/builds/configure-a-build).
 
-## Gemini y conexiones entre redes
+## IA local y conexiones entre redes
 
-Obtén tu clave en [Google AI Studio](https://aistudio.google.com) y configura `GEMINI_API_KEY` exclusivamente en Render. Crear la clave corresponde al propietario. Usa un modelo disponible con JSON estructurado mediante `GEMINI_MODEL`. Comprueba sus cuotas gratuitas y no habilites facturación para conservar el presupuesto de cero.
+El proveedor de esta instalación es Ollama, con Qwen3:4b en el computador del propietario y ngrok como túnel. Configura las cuatro variables indicadas en [IA_LOCAL.md](IA_LOCAL.md). El authtoken de ngrok queda local; Render recibe solamente la URL y la clave independiente de la pasarela.
 
-Sin clave, el sistema indica **Reglas locales** y no simula una llamada de IA. Configurar una clave tampoco demuestra que una solicitud haya sido exitosa: envía un mensaje o genera un resumen y comprueba `ai_requests`. Los fallos del proveedor pasan a revisión humana. [Claves de Gemini](https://ai.google.dev/gemini-api/docs/api-key), [salida estructurada](https://ai.google.dev/gemini-api/docs/structured-output).
+Configurar un proveedor no demuestra que una solicitud haya sido exitosa: envía un mensaje o genera un resumen y comprueba `ai_requests` y `ai_responses`. Los fallos del proveedor pasan a revisión humana. `AI_PROVIDER=local-rules` desactiva el modelo explícitamente; Gemini sigue disponible como adaptador alternativo, sin configurar en este despliegue.
 
 WebRTC usa STUN, una conexión por espectador y un máximo de seis espectadores por directo. Algunas redes necesitan TURN: configura `TURN_URL`, `TURN_USERNAME` y `TURN_PASSWORD` si dispones de un servidor; no se ha contratado uno. Chat y señalización funcionan por WSS. Ante un corte breve el cliente reintenta y el backend espera 45 segundos antes de finalizar el directo.
 
@@ -85,6 +89,6 @@ Render reemplaza el alojamiento Java de Google para respetar la decisión de no 
 5. Captura, recorte, publicación, descarga y enlace público de un clip.
 6. Reproducción después de reiniciar el backend y reconexión después de un corte.
 7. Navegación móvil sin desbordamiento.
-8. Llamada real a Gemini después de configurar la clave.
+8. Clasificación y resumen reales con Ollama, registrados como `SUCCEEDED`; revisión humana cuando el túnel no está disponible.
 
 Si Render está despertando, espera a que salud responda y recarga. Ante errores revisa HTTPS, CORS y credenciales del rol. Para clips revisa FFmpeg, `MEDIA_STORAGE=database` y espacio en Supabase. No muestres secretos en capturas ni registros de soporte.

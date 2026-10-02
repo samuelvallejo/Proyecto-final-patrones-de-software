@@ -42,31 +42,32 @@ ModerationActionCreator.execute(context)
 
 **Problema:** moderación y asistencia editorial deben operar con una misma familia de capacidades. Sin clave de IA hay que seguir ejecutando reglas explícitas y comunicar el alcance disponible.
 
-**Implementación:** `patterns/AiToolkitFactory.java`. La fábrica ofrece dos tipos de producto: `ModerationAnalyzer` y `EditorialAssistant`. `GeminiToolkit` crea ambos productos respaldados por Gemini; `LocalToolkit` crea productos de reglas y metadatos locales, claramente identificados. `AiService.toolkit()` selecciona la familia según la configuración.
+**Implementación:** `patterns/AiToolkitFactory.java`. La fábrica ofrece dos tipos de producto: `ModerationAnalyzer` y `EditorialAssistant`. `OllamaToolkit` crea ambos productos respaldados por el modelo local; `GeminiToolkit` es una familia alternativa; `LocalToolkit` crea productos de reglas y metadatos locales, claramente identificados. `AiService.toolkit()` selecciona la familia con `AI_PROVIDER`.
 
 ```text
 AiToolkitFactory
   ├─ moderation() → ModerationAnalyzer
   └─ editorial()  → EditorialAssistant
 
-GeminiToolkit: clasificación semántica + composición editorial por API
+OllamaToolkit: clasificación semántica + composición editorial local por ngrok
+GeminiToolkit: alternativa con API externa
 LocalToolkit:  restricciones explícitas + salida local identificada
 ```
 
 **Beneficio:** el flujo consumidor usa contratos uniformes. La familia local no pretende ser una IA ni generar análisis semántico.
 
-## Adapter · integración de Gemini
+## Adapter · integración de Ollama por ngrok
 
 **Problema:** el dominio no debe depender del formato REST específico del proveedor.
 
-**Implementación:** `ai/GeminiAdapter.java` implementa `AiGateway.generate(instruction,input,schema)`. Construye `systemInstruction`, `contents` y `generationConfig`, envía la clave por cabecera desde el backend, aplica límites de tiempo y extrae JSON de la envoltura `candidates/content/parts`. Los productos de `GeminiToolkit` validan categoría, confianza y campos editoriales.
+**Implementación:** `ai/OllamaAdapter.java` implementa `AiGateway.generate(instruction,input,schema)`. Envía el contrato con HTTPS y Bearer a la pasarela Java local, que convierte el esquema al JSON Schema de Ollama, fija el modelo y usa `/api/chat` con salida estructurada. El adaptador valida modelo y envoltura; los productos de `LlmToolkit` validan categoría, confianza y campos editoriales. `LocalAiGateway` se ejecuta como proceso separado del backend de Render. `GeminiAdapter` conserva una integración alternativa con el mismo contrato.
 
 ```text
-AiToolkitFactory.GeminiToolkit
+AiToolkitFactory.OllamaToolkit
         ↓ contrato interno
 AiGateway
         ↑ implementado por
-GeminiAdapter → REST generateContent → JSON de Gemini
+OllamaAdapter → HTTPS ngrok → LocalAiGateway → Ollama /api/chat → JSON
 ```
 
 **Beneficio:** un cambio del proveedor se concentra en el adaptador. El frontend nunca conoce la clave. Una respuesta inválida no puede convertirse directamente en una sanción.
@@ -98,5 +99,5 @@ new NotificationBridge.ClipNotice(delivery)
 1. Cambia umbrales y palabras desde Configuración; muestra la validación del Builder.
 2. Envía mensajes permitidos y restringidos; sigue la selección del creador y la aplicación de Factory Method.
 3. Muestra los dos productos de cada familia de Abstract Factory y el indicador del proveedor.
-4. Explica el JSON externo y la conversión en `GeminiAdapter`; muestra el historial de la solicitud.
+4. Explica el JSON externo y la conversión en `OllamaAdapter` y `LocalAiGateway`; muestra el historial de la solicitud.
 5. Genera un aviso de moderación y otro de clip; señala cómo ambos usan la misma entrega a través del Bridge.

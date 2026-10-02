@@ -124,7 +124,10 @@ function connect(stream: string, host: boolean, callback: (event: LiveEvent) => 
         if (host && !state.recorder) {state.started = Date.now(); startRecording(); startAudio();}
         attach();
       }
-      if (event.type === 'error' && !joined) {ws.onclose = null; stop();}
+      if (event.type === 'error' && !joined) {
+        if (event.retryable && host && state.reconnectAttempts > 0) {ws.close(); return;}
+        ws.onclose = null; stop();
+      }
       if (event.type === 'presence' && !host && event.hostOnline === false) closePeers();
       if (event.type === 'viewer-joined' && host && event.peerId) {
         const peer = createPeer(event.peerId); await peer.setLocalDescription(await peer.createOffer());

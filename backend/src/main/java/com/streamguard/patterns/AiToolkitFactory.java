@@ -98,32 +98,53 @@ public interface AiToolkitFactory {
     }
   }
 
-  class GeminiToolkit implements AiToolkitFactory {
+  class LlmToolkit implements AiToolkitFactory {
     private final AiGateway gateway;
     private final ObjectMapper json;
+    private final String provider;
 
-    public GeminiToolkit(AiGateway gateway, ObjectMapper json) {
+    public LlmToolkit(AiGateway gateway, ObjectMapper json, String provider) {
       this.gateway = gateway;
       this.json = json;
+      this.provider = provider;
     }
 
     public String provider() {
-      return "GEMINI";
+      return provider;
     }
 
     private JsonNode schema(String text) {
       try {
-        return json.readTree(text);
+        var result = json.readTree(text);
+        annotate(result);
+        return result;
       } catch (Exception e) {
         throw new IllegalStateException(e);
       }
+    }
+
+    private void annotate(JsonNode schema) {
+      if (schema.isObject()) {
+        var node = (com.fasterxml.jackson.databind.node.ObjectNode) schema;
+        if (node.path("type").asText().equals("STRING") && !node.has("enum")) {
+          if (!node.has("description"))
+            node.put("description", "Concise text written ONLY in Spanish (es), never English.");
+          if (!node.has("maxLength")) node.put("maxLength", 500);
+        }
+        if (node.path("type").asText().equals("ARRAY")) node.put("maxItems", 8);
+        node.elements().forEachRemaining(this::annotate);
+      } else if (schema.isArray()) schema.forEach(this::annotate);
     }
 
     public ModerationAnalyzer moderation() {
       return (text, policy) -> {
         var s =
             schema(
-                "{\"type\":\"OBJECT\",\"properties\":{\"category\":{\"type\":\"STRING\",\"enum\":[\"SAFE\",\"OFFENSIVE\",\"HATE\",\"SEXUAL\",\"VIOLENCE\",\"SPAM\",\"LINK\",\"RESTRICTED\",\"UNCERTAIN\"]},\"confidence\":{\"type\":\"NUMBER\"},\"reason\":{\"type\":\"STRING\"}},\"required\":[\"category\",\"confidence\",\"reason\"]}");
+                "{\"type\":\"OBJECT\",\"properties\":{\"category\":{\"type\":\"STRING\",\"enum\":[\"SAFE\",\"OFFENSIVE\",\"HATE\",\"SEXUAL\",\"VIOLENCE\",\"SPAM\",\"LINK\",\"RESTRICTED\",\"UNCERTAIN\"]},\"confidence\":{\"type\":\"NUMBER\",\"minimum\":0,\"maximum\":1,\"description\":\"Probability"
+                    + " of a violation; SAFE means"
+                    + " zero.\"},\"reason\":{\"type\":\"STRING\",\"maxLength\":160,\"description\":\"One"
+                    + " short sentence written ONLY in Spanish (es), never"
+                    + " English.\"}},\"required\":[\"category\",\"confidence\",\"reason\"]}");
         var input = json.valueToTree(Map.of("message", text, "policy", policy));
         var out =
             gateway.generate(
@@ -132,17 +153,25 @@ public interface AiToolkitFactory {
                     + " threats, hate, sexual content, violence, offensive content, spam, and"
                     + " restricted topics. Consider context; do not penalize legitimate isolated"
                     + " words. confidence is the probability of a violation between 0 and 1 (SAFE"
-                    + " should be near 0). Write reason in Spanish, at most 400 characters. Use"
-                    + " UNCERTAIN for ambiguity. Return only the requested schema.",
+                    + " must be 0; a clear violation should be near 1). Do not report confidence in"
+                    + " the category: report the risk of a violation. Examples: a friendly greeting"
+                    + " => SAFE, confidence 0; an explicit death threat => VIOLENCE, confidence"
+                    + " 0.99. Write one short sentence in Spanish as reason, at most 200"
+                    + " characters. Use UNCERTAIN for ambiguity. Return only the requested schema.",
                 input,
                 s);
         if (!out.path("confidence").isNumber())
           throw new IllegalArgumentException("Missing confidence");
-        return new Verdict(
-            out.path("category").asText(),
-            out.path("confidence").asDouble(),
-            out.path("reason").asText(),
-            "GEMINI");
+        var verdict =
+            new Verdict(
+                out.path("category").asText(),
+                out.path("confidence").asDouble(),
+                out.path("reason").asText(),
+                provider);
+        // Providers sometimes report classification certainty instead of violation risk for SAFE.
+        return verdict.category().equals("SAFE")
+            ? new Verdict("SAFE", 0, verdict.reason(), provider)
+            : verdict;
       };
     }
 
@@ -171,6 +200,18 @@ public interface AiToolkitFactory {
           throw new IllegalArgumentException("Invalid editorial response");
         return out;
       };
+    }
+  }
+
+  class GeminiToolkit extends LlmToolkit {
+    public GeminiToolkit(AiGateway gateway, ObjectMapper json) {
+      super(gateway, json, "GEMINI");
+    }
+  }
+
+  class OllamaToolkit extends LlmToolkit {
+    public OllamaToolkit(AiGateway gateway, ObjectMapper json) {
+      super(gateway, json, "OLLAMA");
     }
   }
 }

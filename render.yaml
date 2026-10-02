@@ -28,5 +28,11 @@ services:
         value: -XX:MaxRAMPercentage=50 -XX:ActiveProcessorCount=1
       - key: MAX_VIEWERS
         value: 6
-      - key: GEMINI_API_KEY
+      - key: AI_PROVIDER
+        value: ollama
+      - key: OLLAMA_GATEWAY_URL
         sync: false
+      - key: OLLAMA_GATEWAY_TOKEN
+        sync: false
+      - key: OLLAMA_MODEL
+        value: qwen3:4b

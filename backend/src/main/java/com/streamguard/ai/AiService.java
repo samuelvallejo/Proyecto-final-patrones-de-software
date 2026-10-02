@@ -13,27 +13,52 @@ import org.springframework.stereotype.Service;
 public class AiService {
   private final Db db;
   private final GeminiAdapter gemini;
+  private final OllamaAdapter ollama;
+  private final String provider;
   private final ObjectMapper json;
-  private final Semaphore slots = new Semaphore(6);
+  private final Semaphore slots = new Semaphore(1);
 
   public record Analysis(UUID requestId, Verdict verdict) {}
 
   public record Editorial(UUID requestId, JsonNode output, String provider) {}
 
-  public AiService(Db db, GeminiAdapter gemini, ObjectMapper json) {
+  public AiService(
+      Db db,
+      GeminiAdapter gemini,
+      OllamaAdapter ollama,
+      ObjectMapper json,
+      @org.springframework.beans.factory.annotation.Value("${app.ai-provider}") String provider) {
     this.db = db;
     this.gemini = gemini;
+    this.ollama = ollama;
+    this.provider = provider.toUpperCase(Locale.ROOT).replace('-', '_');
+    if (!Set.of("GEMINI", "OLLAMA", "LOCAL_RULES").contains(this.provider))
+      throw new IllegalArgumentException("Unsupported AI provider");
     this.json = json;
   }
 
   public boolean configured() {
-    return gemini.configured();
+    return provider.equals("OLLAMA")
+        ? ollama.configured()
+        : provider.equals("GEMINI") && gemini.configured();
+  }
+
+  public String provider() {
+    return provider;
+  }
+
+  public String model() {
+    return provider.equals("OLLAMA")
+        ? ollama.model()
+        : provider.equals("GEMINI") ? gemini.model() : "local-rules";
   }
 
   private AiToolkitFactory toolkit() {
-    return configured()
-        ? new AiToolkitFactory.GeminiToolkit(gemini, json)
-        : new AiToolkitFactory.LocalToolkit(json);
+    return switch (provider) {
+      case "OLLAMA" -> new AiToolkitFactory.OllamaToolkit(ollama, json);
+      case "GEMINI" -> new AiToolkitFactory.GeminiToolkit(gemini, json);
+      default -> new AiToolkitFactory.LocalToolkit(json);
+    };
   }
 
   private UUID request(UUID stream, String task, Object input) {
@@ -41,7 +66,7 @@ public class AiService {
         "INSERT INTO ai_requests(stream_id,model_name,task,input) VALUES (?,?,?,?::jsonb) RETURNING"
             + " id",
         stream,
-        configured() ? gemini.model() : "local-rules",
+        model(),
         task,
         serialize(input));
   }
