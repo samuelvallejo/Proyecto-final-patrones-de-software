@@ -10,6 +10,13 @@ foreach ($taskName in @('ngrok','local-ai-gateway','ollama')) {
         $taskExpected = if ($taskName -eq 'local-ai-gateway') { 'com.streamguard.ai.LocalAiGateway' } else { Join-Path $taskRoot ".tools/$taskName/$taskName.exe" }
         $taskMatches = if ($taskName -eq 'local-ai-gateway') { $taskProcess.CommandLine -like "*$taskExpected*" -and $taskProcess.CommandLine -like ('*' + (Join-Path $taskRoot '.local/cloud/local-ai-runtime.jar') + '*') } else { $taskProcess.ExecutablePath -eq $taskExpected }
         if (-not $taskMatches) { throw "Recorded process for $taskName does not match; refusing to stop it" }
+        if ($taskName -eq 'ollama') {
+            $env:OLLAMA_HOST = '127.0.0.1:11434'
+            try {
+                $taskLoaded = Invoke-RestMethod 'http://127.0.0.1:11434/api/ps' -TimeoutSec 3
+                foreach ($taskModel in $taskLoaded.models.name) { & $taskProcess.ExecutablePath stop $taskModel | Out-Null }
+            } catch { }
+        }
         Stop-Process -Id $taskPid
     }
     Remove-Item -LiteralPath $taskPidPath
