@@ -17,7 +17,7 @@ services:
       - key: PGPASSWORD
         sync: false
       - key: FRONTEND_ORIGIN
-        value: https://streamguard-delta.vercel.app
+        value: https://streamguard-delta.vercel.app,https://streamguard-samuel-261002.web.app,https://streamguard-samuel-261002.firebaseapp.com
       - key: MEDIA_STORAGE
         value: database
       - key: MEDIA_DIR

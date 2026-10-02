@@ -10,7 +10,7 @@ Las tres migraciones Flyway fueron aplicadas y validadas. El modelo contiene **6
 
 El backend conserva su JAR Java. Tras la migración se repitieron sus diez pruebas. `npm run build` comprueba TypeScript estricto de la interfaz y del service worker, valida los catálogos y compila con Vite. En Windows se debe cerrar el proceso que ejecuta el JAR antes de volver a empaquetarlo: Java mantiene el archivo abierto.
 
-La prueba adicional comprueba que la validación devuelve los nombres y mensajes en español. El verificador de catálogos comprobó 582 referencias de traducción. Véase [IDIOMAS.md](IDIOMAS.md).
+La prueba adicional comprueba que la validación devuelve los nombres y mensajes en español. El verificador de catálogos comprobó 584 referencias de traducción. Véase [IDIOMAS.md](IDIOMAS.md).
 
 Se verificó además el arranque del backend local contra PostgreSQL 17.11 de Supabase con SSL, rol privado, baseline V2 y migración V3. La prueba de clips borra la copia temporal y exige que la descarga reconstruida desde PostgreSQL tenga exactamente los mismos bytes. Los asesores de seguridad de Supabase no devolvieron hallazgos.
 

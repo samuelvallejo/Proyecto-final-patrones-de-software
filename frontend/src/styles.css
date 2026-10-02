@@ -8,3 +8,5 @@
 .sidebar>.html-block:last-child{margin-top:auto}.studio-side>.html-block>.info-banner{margin:18px;font-size:11px}.chat-author{margin-right:9px}input[type=checkbox]{width:16px;height:16px;padding:0;accent-color:var(--lime);vertical-align:middle;margin:0 9px 0 0}.consent label,.setting-checkbox label{line-height:1.7}
 
 .app-dialog{padding:0;max-width:calc(100vw - 24px);border:1px solid var(--border);border-radius:18px;background:var(--surface);color:var(--text)}.app-dialog::backdrop{background:#0009}.dialog-heading{font-size:18px;padding:20px 24px 0}.dialog-form{max-width:calc(100vw - 26px)}.setting-checkbox,.consent{display:block;line-height:1.7}
+/* Wait for bootstrap data before mounting interactive forms. */
+.startup-loading{min-height:100dvh;display:grid;place-items:center;color:var(--muted);padding:2rem;text-align:center}

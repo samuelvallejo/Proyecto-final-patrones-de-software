@@ -31,7 +31,9 @@ export class StreamGuardApp {
     this.api.onUnauthorized = () => {this.user = null; this.configureMedia();};
   }
   async start(): Promise<void> {
-    this.shell();
+    const loading = panel('startup-loading');
+    loading.setAttribute('role', 'status'); loading.textContent = t('uiExploreText26');
+    this.root.replaceChildren(loading);
     const results = await Promise.allSettled([
       this.api.request('GET', '/config'), this.api.request('GET', '/categories'),
       this.api.token ? this.api.request('GET', '/auth/me') : Promise.resolve(null),

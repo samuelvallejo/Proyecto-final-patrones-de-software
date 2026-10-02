@@ -2,6 +2,8 @@
 
 Los visitantes acceden por Vercel y no instalan PostgreSQL, Java ni HeidiSQL. Render Free ejecuta el backend Java y Supabase conserva la base de datos. La rama del [repositorio](https://github.com/samuelvallejo/Proyecto-final-patrones-de-software) es `codex/streamguard`.
 
+Direcciones publicadas: [Vercel](https://streamguard-delta.vercel.app), [Firebase Hosting](https://streamguard-samuel-261002.web.app), [salud del backend Render](https://streamguard-backend.onrender.com/actuator/health). Servicio Render: `srv-davtsdp42hec73e5edn0`. Proyecto Firebase: `streamguard-samuel-261002` (Spark, sin facturación).
+
 ## PostgreSQL y otros computadores
 
 Proyecto [streamguard en Supabase](https://supabase.com/dashboard/project/jegiuidrxxyijutqoowd), región `us-east-1`, esquema privado `streamguard`. El backend conecta mediante el pooler de sesiones, SSL y un rol dedicado sin privilegios de superusuario. El frontend no recibe credenciales ni consulta las tablas directamente. Las tablas tienen RLS y no se exponen a las claves públicas de Supabase.
@@ -72,7 +74,7 @@ WebRTC usa STUN, una conexión por espectador y un máximo de seis espectadores 
 
 ## Firebase opcional
 
-Render reemplaza el alojamiento Java de Google para respetar la decisión de no activar facturación. Firebase Hosting puede publicar una copia adicional estática en Spark con la misma API de Render. No se utilizan Cloud Run ni App Hosting. La creación del proyecto Firebase depende de que el propietario acepte los términos de Google; iniciar sesión en la CLI no sustituye ese paso. [Planes de Firebase](https://firebase.google.com/pricing).
+Render reemplaza el alojamiento Java de Google para respetar la decisión de no activar facturación. Firebase Hosting puede publicar una copia adicional estática en Spark con la misma API de Render. No se utilizan Cloud Run ni App Hosting. El propietario aceptó los términos de Google Cloud y Firebase y se publicó el sitio `streamguard-samuel-261002.web.app`. También sirve desde `streamguard-samuel-261002.firebaseapp.com`. Ambos orígenes están configurados en Render. Para actualizarlo: compila con `PUBLIC_API_URL=https://streamguard-backend.onrender.com` y ejecuta `npx -y firebase-tools@latest deploy --only hosting --project streamguard-samuel-261002`. [Planes de Firebase](https://firebase.google.com/pricing).
 
 ## Comprobación final
 
