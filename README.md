@@ -1,6 +1,6 @@
 # StreamGuard · En vivo, con confianza
 
-Proyecto académico de streaming con frontend **TypeScript estricto / Vite**, backend **Java 21 / Spring Boot**, PostgreSQL con **65 tablas de dominio**, e IA local **Ollama / Qwen3:4b** conectada por **ngrok** mediante una pasarela Java autenticada. Interfaz PWA en español adaptable a computador y celular. Configuración gratuita: frontend en **Vercel y Firebase Hosting**, backend en **Render Free** y PostgreSQL en **Supabase**.
+Proyecto académico de streaming con frontend **TypeScript estricto / Vite**, backend **Java 21 / Spring Boot**, PostgreSQL con **65 tablas de dominio**, e IA local **Ollama / Qwen3:4b-instruct** conectada por **ngrok** mediante una pasarela Java autenticada. Interfaz PWA en español adaptable a computador y celular. Configuración gratuita: frontend en **Vercel y Firebase Hosting**, backend en **Render Free** y PostgreSQL en **Supabase**.
 
 ## Comienza aquí
 

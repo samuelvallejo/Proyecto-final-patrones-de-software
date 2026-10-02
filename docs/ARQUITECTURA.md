@@ -10,7 +10,7 @@ flowchart LR
     B -->|JDBC y Flyway| D[(PostgreSQL\n65 tablas)]
     B -->|HTTPS y Bearer privado| N[ngrok]
     N --> G[Pasarela Java local]
-    G --> O[Ollama / Qwen3:4b]
+    G --> O[Ollama / Qwen3:4b-instruct]
     B --> M[FFmpeg y archivos temporales]
     F <-->|WebRTC audio y video| V[Otro navegador]
 ```

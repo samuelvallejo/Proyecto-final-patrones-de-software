@@ -9,7 +9,7 @@ if (-not (Test-Path -LiteralPath $taskOllama) -or (-not $LocalOnly -and -not (Te
 $taskJar = Join-Path $taskRoot 'backend/target/backend-1.0.0.jar'
 if (-not (Test-Path -LiteralPath $taskJar)) { throw 'Compile the Java backend with Maven first' }
 $taskJava = if ($env:JAVA_HOME) { Join-Path $env:JAVA_HOME 'bin/java.exe' } else { (Get-Command java.exe -ErrorAction Stop).Source }
-$taskModel = if ($env:OLLAMA_MODEL) { $env:OLLAMA_MODEL } else { 'qwen3:4b' }
+$taskModel = if ($env:OLLAMA_MODEL) { $env:OLLAMA_MODEL } else { 'qwen3:4b-instruct' }
 $taskKeyPath = Join-Path $taskCloud 'local-ai-gateway.key'
 if (-not (Test-Path -LiteralPath $taskKeyPath)) {
     $taskBytes = New-Object byte[] 32
@@ -43,7 +43,11 @@ $null = Invoke-RestMethod 'http://127.0.0.1:11434/api/generate' -Method Post -Co
 $env:LOCAL_AI_TOKEN_FILE = $taskKeyPath
 $env:OLLAMA_MODEL = $taskModel
 $taskHeaders = @{ Authorization = "Bearer $taskKey" }
-try { $null = Invoke-RestMethod 'http://127.0.0.1:11435/health' -Headers $taskHeaders -TimeoutSec 5 } catch {
+$taskGatewayHealth = $null
+try { $taskGatewayHealth = Invoke-RestMethod 'http://127.0.0.1:11435/health' -Headers $taskHeaders -TimeoutSec 5 } catch { }
+if ($taskGatewayHealth -and $taskGatewayHealth.model -ne $taskModel) { throw 'A gateway for another model is running. Stop the local AI processes before switching models.' }
+if (-not $taskGatewayHealth) {
+    if (Get-NetTCPConnection -LocalPort 11435 -State Listen -ErrorAction SilentlyContinue) { throw 'Gateway port is already occupied; inspect the running process before restarting.' }
     $taskRuntimeJar = Join-Path $taskCloud 'local-ai-runtime.jar'
     Copy-Item -LiteralPath $taskJar -Destination $taskRuntimeJar -Force
     $taskArgs = @('-Dloader.main=com.streamguard.ai.LocalAiGateway','-cp',('"' + $taskRuntimeJar + '"'),'org.springframework.boot.loader.launch.PropertiesLauncher')

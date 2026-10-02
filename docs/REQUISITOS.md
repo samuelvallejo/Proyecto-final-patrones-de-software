@@ -5,7 +5,7 @@ Las imágenes adjuntas se tomaron como requisitos académicos y explicación de 
 | Requisito | Evidencia entregada |
 |---|---|
 | Caso de estudio de la vida real | Problemas de moderación y administración de directos; descritos en README y arquitectura. |
-| Implementar IA | Adaptador Ollama, Qwen3:4b local por ngrok, clasificación de chat, asistencia editorial e historial. Gemini es una alternativa opcional. |
+| Implementar IA | Adaptador Ollama, Qwen3:4b-instruct local por ngrok, clasificación de chat, asistencia editorial e historial. Gemini es una alternativa opcional. |
 | Cinco patrones | Builder, Factory Method, Abstract Factory, Adapter y Bridge, con uso real y documentación. |
 | Investigar otros patrones | Strategy, Observer/pub-sub y separación por capas en PATRONES.md. |
 | Frontend, backend y BD | TypeScript / Vite, Java Spring Boot y PostgreSQL. |

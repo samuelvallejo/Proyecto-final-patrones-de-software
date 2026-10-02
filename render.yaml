@@ -35,4 +35,4 @@ services:
       - key: OLLAMA_GATEWAY_TOKEN
         sync: false
       - key: OLLAMA_MODEL
-        value: qwen3:4b
+        value: qwen3:4b-instruct

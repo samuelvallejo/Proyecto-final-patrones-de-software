@@ -218,7 +218,7 @@ public final class LocalAiGateway {
         new LocalAiGateway(
             Integer.parseInt(System.getenv().getOrDefault("LOCAL_AI_PORT", "11435")),
             Files.readString(Path.of(tokenFile)).trim(),
-            System.getenv().getOrDefault("OLLAMA_MODEL", "qwen3:4b"),
+            System.getenv().getOrDefault("OLLAMA_MODEL", "qwen3:4b-instruct"),
             URI.create("http://127.0.0.1:11434"));
     Runtime.getRuntime().addShutdownHook(new Thread(gateway::stop));
     gateway.start();

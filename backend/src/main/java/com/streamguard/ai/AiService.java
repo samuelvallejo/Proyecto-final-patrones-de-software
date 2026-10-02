@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AiService {
+  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AiService.class);
   private final Db db;
   private final GeminiAdapter gemini;
   private final OllamaAdapter ollama;
@@ -104,6 +105,7 @@ public class AiService {
       response(id, result, start, configured() ? "SUCCEEDED" : "LOCAL");
       return new Analysis(id, result);
     } catch (Exception e) {
+      log.warn("Moderation provider {} failed: {}", provider, e.getMessage());
       Verdict result =
           new Verdict("UNCERTAIN", .6, Messages.text("aiServiceModerateText02"), "UNAVAILABLE");
       response(id, result, start, "FAILED");
@@ -124,6 +126,7 @@ public class AiService {
       response(id, result, start, configured() ? "SUCCEEDED" : "LOCAL");
       return new Editorial(id, result, factory.provider());
     } catch (Exception e) {
+      log.warn("Editorial provider {} failed: {}", provider, e.getMessage());
       var result = new AiToolkitFactory.LocalToolkit(json).editorial().compose(input);
       ((com.fasterxml.jackson.databind.node.ObjectNode) result)
           .put("summary", Messages.text("aiServiceEditorialText04"));

@@ -47,7 +47,7 @@ Se inicializó el snapshot exacto V1/V2. El perfil `cloud` reconoce esa base com
 | `AI_PROVIDER` | `ollama` |
 | `OLLAMA_GATEWAY_URL` | Origen HTTPS de ngrok |
 | `OLLAMA_GATEWAY_TOKEN` | Clave privada de la pasarela local, distinta del authtoken de ngrok |
-| `OLLAMA_MODEL` | `qwen3:4b` |
+| `OLLAMA_MODEL` | `qwen3:4b-instruct` |
 
 6. Despliega. Docker instala FFmpeg y construye el JAR Java 21. Spring escucha en `PORT`, asignado por Render.
 7. Espera a que el servicio indique **Live** y `/actuator/health` responda `{"status":"UP"}`.
@@ -70,7 +70,7 @@ Vercel recibe solamente el origen público del backend. No añadas `PGPASSWORD` 
 
 ## IA local y conexiones entre redes
 
-El proveedor de esta instalación es Ollama, con Qwen3:4b en el computador del propietario y ngrok como túnel. Configura las cuatro variables indicadas en [IA_LOCAL.md](IA_LOCAL.md). El authtoken de ngrok queda local; Render recibe solamente la URL y la clave independiente de la pasarela.
+El proveedor de esta instalación es Ollama, con Qwen3:4b-instruct en el computador del propietario y ngrok como túnel. Configura las cuatro variables indicadas en [IA_LOCAL.md](IA_LOCAL.md). El authtoken de ngrok queda local; Render recibe solamente la URL y la clave independiente de la pasarela.
 
 Configurar un proveedor no demuestra que una solicitud haya sido exitosa: envía un mensaje o genera un resumen y comprueba `ai_requests` y `ai_responses`. Los fallos del proveedor pasan a revisión humana. `AI_PROVIDER=local-rules` desactiva el modelo explícitamente; Gemini sigue disponible como adaptador alternativo, sin configurar en este despliegue.
 

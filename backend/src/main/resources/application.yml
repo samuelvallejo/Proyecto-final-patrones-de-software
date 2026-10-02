@@ -36,7 +36,7 @@ app:
   ai-provider: ${AI_PROVIDER:local-rules}
   ollama-url: ${OLLAMA_GATEWAY_URL:}
   ollama-token: ${OLLAMA_GATEWAY_TOKEN:}
-  ollama-model: ${OLLAMA_MODEL:qwen3:4b}
+  ollama-model: ${OLLAMA_MODEL:qwen3:4b-instruct}
   max-viewers: ${MAX_VIEWERS:6}
   turn-url: ${TURN_URL:}
   turn-user: ${TURN_USERNAME:}

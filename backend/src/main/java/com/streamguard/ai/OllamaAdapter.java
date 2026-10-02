@@ -75,7 +75,10 @@ public class OllamaAdapter implements AiGateway {
       try (var body = response.body()) {
         byte[] bytes = body.readNBytes(65537);
         if (response.statusCode() != 200 || bytes.length > 65536)
-          throw new IllegalStateException("Local AI gateway returned an invalid response");
+          throw new IllegalStateException(
+              "Local AI gateway returned HTTP "
+                  + response.statusCode()
+                  + " or an oversized response");
         var envelope = json.readTree(bytes);
         if (!model.equals(envelope.path("model").asText()) || !envelope.path("output").isObject())
           throw new IllegalStateException("Local AI model or output does not match the contract");
@@ -85,7 +88,8 @@ public class OllamaAdapter implements AiGateway {
       Thread.currentThread().interrupt();
       throw new IllegalStateException("Local AI request interrupted", e);
     } catch (java.io.IOException e) {
-      throw new IllegalStateException("Could not obtain a valid local AI response", e);
+      throw new IllegalStateException(
+          "Could not obtain a valid local AI response: " + e.getClass().getSimpleName(), e);
     }
   }
 }

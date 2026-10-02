@@ -30,7 +30,13 @@ class LocalAiGatewayTest {
                   Map.of("category", "SAFE", "confidence", 0.05, "reason", "Safe fixture"));
           byte[] bytes =
               json.writeValueAsBytes(
-                  Map.of("model", "qwen3:4b", "done", true, "message", Map.of("content", verdict)));
+                  Map.of(
+                      "model",
+                      "qwen3:4b-instruct",
+                      "done",
+                      true,
+                      "message",
+                      Map.of("content", verdict)));
           exchange.sendResponseHeaders(200, bytes.length);
           exchange.getResponseBody().write(bytes);
           exchange.close();
@@ -40,12 +46,12 @@ class LocalAiGatewayTest {
         new LocalAiGateway(
             0,
             token,
-            "qwen3:4b",
+            "qwen3:4b-instruct",
             URI.create("http://127.0.0.1:" + upstream.getAddress().getPort()));
     gateway.start();
     try {
       var adapter =
-          new OllamaAdapter(json, "http://127.0.0.1:" + gateway.port(), token, "qwen3:4b");
+          new OllamaAdapter(json, "http://127.0.0.1:" + gateway.port(), token, "qwen3:4b-instruct");
       var factory = new AiToolkitFactory.OllamaToolkit(adapter, json);
       var verdict = factory.moderation().analyze("Hello", new ModerationPolicy.Builder().build());
       assertEquals("SAFE", verdict.category());
@@ -103,11 +109,11 @@ class LocalAiGatewayTest {
   void adapterRejectsUnencryptedRemoteGatewaysAndMissingCredentials() {
     assertThrows(
         IllegalArgumentException.class,
-        () -> new OllamaAdapter(json, "http://example.com", token, "qwen3:4b"));
+        () -> new OllamaAdapter(json, "http://example.com", token, "qwen3:4b-instruct"));
     assertThrows(
         IllegalStateException.class,
         () ->
-            new OllamaAdapter(json, "", "", "qwen3:4b")
+            new OllamaAdapter(json, "", "", "qwen3:4b-instruct")
                 .generate("test", json.createObjectNode(), json.createObjectNode()));
   }
 
