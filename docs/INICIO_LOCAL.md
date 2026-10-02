@@ -13,7 +13,7 @@ npm run build
 npm run preview
 ```
 
-Abre [http://localhost:5173](http://localhost:5173). Docker instala FFmpeg en el contenedor del backend y mantiene PostgreSQL y archivos en volúmenes. Para usar Gemini, configura `GEMINI_API_KEY` en el entorno antes de levantar Compose y recrea el servicio backend.
+Abre [http://localhost:5173](http://localhost:5173). Docker instala FFmpeg en el contenedor del backend y mantiene PostgreSQL y archivos en volúmenes. Para la IA local consulta [IA_LOCAL.md](IA_LOCAL.md): inicia Ollama, la pasarela y ngrok y configura sus variables en el backend. Para pruebas sin modelo usa `AI_PROVIDER=local-rules`.
 
 ## Opción B: herramientas instaladas en Windows
 
@@ -58,7 +58,7 @@ Para desarrollar con recarga automática, usa `npm run dev` en lugar de `npm run
 4. En una ventana privada, abre la plataforma, entra al directo y crea otra cuenta para conversar. Usa audífonos para evitar realimentación de audio entre ambas ventanas.
 5. Envía mensajes respetuosos y uno con la palabra restringida. Revisa la cola en **Moderación**. Invita a una tercera cuenta como moderador para mostrar permisos.
 6. Tras al menos unos segundos, marca un momento. Abre **Biblioteca de clips**, reproduce el archivo, edita el recorte y publícalo. Los clips pendientes solo los puede reproducir su creador.
-7. Con Gemini configurado, usa **Asistente IA** para generar el análisis de la última transmisión.
+7. Con el modelo local y ngrok activos, usa **Asistente IA** para generar el análisis de la última transmisión.
 8. Finaliza la transmisión antes de cerrar la pestaña del emisor. Si la conexión del emisor se pierde, el directo termina.
 
 ## Verificación

@@ -119,7 +119,7 @@
     },
     {
       "name": "blocked_topics",
-      "purpose": "Temas enviados como contexto a Gemini",
+      "purpose": "Temas enviados como contexto al modelo de IA",
       "scope": "operational"
     },
     {

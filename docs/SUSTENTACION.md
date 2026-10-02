@@ -1,6 +1,6 @@
 # Guion de sustentación
 
-La presentación editable está en `artifacts/StreamGuard-typescript-presentation.pptx`. El código de autoría está en `scripts/build-presentation.mjs`. El diseño sigue los colores de la aplicación. Las capturas proceden de las pruebas del producto, incluida una cámara sintética; no se presentan como transmisiones de una persona real.
+La presentación editable actual está en `artifacts/StreamGuard-cloud-local-ai-presentation.pptx`; se conserva la versión anterior. El código de autoría está en `scripts/build-presentation.mjs`. El diseño sigue los colores de la aplicación. Las capturas proceden de las pruebas del producto, incluida una cámara sintética; no se presentan como transmisiones de una persona real.
 
 ## Recorrido sugerido de 10 a 15 minutos
 
@@ -11,7 +11,7 @@ La presentación editable está en `artifacts/StreamGuard-typescript-presentatio
 5. Demuestra un directo con dos cuentas. Usa cámara sintética o una cámara propia con permisos.
 6. Envía un mensaje permitido y otro con una palabra restringida. Apruébalo como moderador y muestra el cambio visible.
 7. Marca un momento, reproduce el clip, recórtalo y publícalo. Abre el enlace público en otra ventana.
-8. Con una clave válida, genera un análisis con Gemini y explica qué contexto recibe.
+8. Con Ollama y ngrok activos, genera un análisis y explica qué contexto recibe el modelo local.
 9. Muestra la vista móvil y explica cómo publicar los servicios siguiendo DESPLIEGUE.md.
 10. Explica el alcance: audiencias pequeñas, segmentos breves, una réplica y necesidad de SFU/CDN para grandes audiencias.
 
@@ -19,7 +19,7 @@ La presentación editable está en `artifacts/StreamGuard-typescript-presentatio
 
 **¿Qué lenguaje usa cada capa?** El frontend usa TypeScript estricto en `frontend/src/`, que Vite compila para el navegador. El backend usa Java 21 / Spring Boot. PostgreSQL conserva las 65 tablas y sus relaciones. Los cinco patrones principales se implementan en el backend Java.
 
-**¿Por qué no se llama a Gemini desde el frontend?** El backend conserva la clave, aplica permisos y registra/valida la respuesta antes de ejecutar una acción.
+**¿Por qué no se llama al modelo desde el frontend?** El backend conserva la clave de la pasarela, aplica permisos y registra/valida la respuesta antes de ejecutar una acción. ngrok conecta Render con la pasarela Java y Ollama en el computador del propietario.
 
 **¿Factory Method y Abstract Factory son lo mismo?** Factory Method delega la creación de un producto a creadores concretos. Abstract Factory crea una familia de productos relacionados: moderación y asistencia editorial.
 
@@ -27,7 +27,7 @@ La presentación editable está en `artifacts/StreamGuard-typescript-presentatio
 
 **¿Por qué tantas tablas?** El dominio separa identidades, permisos por canal, eventos, chat, decisiones, sanciones, IA, clips y versiones. El catálogo distingue tablas operativas, catálogos y extensiones previstas. La cantidad no reemplaza el análisis de relaciones y restricciones.
 
-**¿Qué pasa cuando Gemini falla?** El mensaje pasa a revisión humana y la solicitud conserva el estado `FAILED`. El frontend no afirma que una regla local sea un análisis de IA.
+**¿Qué pasa cuando el modelo o ngrok fallan?** El mensaje pasa a revisión humana y la solicitud conserva el estado `FAILED`. El frontend no afirma que una regla local sea un análisis de IA. La web sigue publicada aunque el computador del modelo esté apagado.
 
 **¿Cómo se protege un clip pendiente?** El endpoint de archivo comprueba propiedad o existencia de un clip aprobado. Editar un clip crea un archivo nuevo cuando hay recorte y vuelve a ponerlo en estado pendiente.
 

@@ -74,7 +74,7 @@
   "schemaText72": "No edites una migración ya aplicada en producción. Agrega una nueva versión para cambiar el esquema. En Supabase, el esquema privado streamguard fue inicializado con V1/V2; el perfil cloud reconoce ese punto de partida y Flyway aplica V3 y versiones posteriores. El rol streamguard_backend conecta mediante el pooler de sesiones y SSL. El frontend no recibe credenciales de PostgreSQL.",
   "schemaIntroduction": "El esquema contiene **{count} tablas de dominio**. Flyway agrega `flyway_schema_history`, que no se cuenta para el requisito académico. El catálogo y las relaciones se generan desde la migración real con `scripts/document-schema.py`.",
   "schemaLabelText01": "Reacciones a mensajes individuales",
-  "schemaLabelText02": "Temas enviados como contexto a Gemini",
+  "schemaLabelText02": "Temas enviados como contexto al modelo de IA",
   "schemaLabelText03": "Tarea, entrada JSONB, modelo solicitado y estado",
   "schemaLabelText04": "Historial previo a ediciones y recortes",
   "schemaLabelText05": "Etiquetas asignadas a clips",

@@ -1,0 +1,91 @@
+{
+  "passed": true,
+  "verifiedAt": "2026-10-02",
+  "frontendUrl": "https://streamguard-delta.vercel.app",
+  "backendUrl": "https://streamguard-backend.onrender.com",
+  "database": "Supabase PostgreSQL private streamguard schema",
+  "transport": "Render Java -> HTTPS ngrok -> authenticated Java gateway -> Ollama CUDA",
+  "model": "qwen3:4b-instruct",
+  "requests": [
+    {
+      "request_id": "f95840e8-1803-45fe-9d44-6706986bf036",
+      "stream_id": "7dbb5db5-91ce-4a8e-b97a-9a7a180789c3",
+      "task": "EDITORIAL",
+      "model_name": "qwen3:4b-instruct",
+      "status": "SUCCEEDED",
+      "latency_ms": 9004,
+      "output": {
+        "faqs": [],
+        "title": "Prueba de laboratorio en vivo con cámara sintética",
+        "topics": [
+          "Laboratorio en vivo",
+          "Cámara sintética",
+          "Prueba de navegación",
+          "Entorno de prueba",
+          "Momento marcado",
+          "Creador de contenido",
+          "Interfaz de usuario",
+          "Pruebas de navegación"
+        ],
+        "summary": "Se realizó una prueba inicial en un entorno de laboratorio en vivo utilizando una cámara sintética. Se registró un saludo y un momento clave marcado por el creador. No se incluyeron preguntas en el chat.",
+        "description": "Prueba inicial de un laboratorio en vivo con cámara sintética. Se registra un saludo básico y un momento marcado por el creador."
+      },
+      "created_at": "2026-10-02 18:00:54.238576+00"
+    },
+    {
+      "request_id": "092dbf51-7554-4a6a-aa34-af0c8ff43ddb",
+      "stream_id": "7dbb5db5-91ce-4a8e-b97a-9a7a180789c3",
+      "task": "EDITORIAL",
+      "model_name": "qwen3:4b-instruct",
+      "status": "SUCCEEDED",
+      "latency_ms": 12218,
+      "output": {
+        "faqs": [],
+        "title": "Prueba de laboratorio en vivo con cámara sintética",
+        "topics": [
+          "Laboratorio en vivo",
+          "Cámara sintética",
+          "Pruebas de navegación",
+          "Entornos de prueba",
+          "Funcionamiento de cámaras",
+          "Propósito del laboratorio",
+          "Momentos marcados",
+          "Navegación en entornos"
+        ],
+        "summary": "Se realizó una prueba inicial en un entorno de laboratorio en vivo con una cámara sintética. Se registró un saludo y un momento marcado por el creador. No se proporcionaron detalles sobre el funcionamiento de la cámara o el propósito del laboratorio.",
+        "description": "Prueba inicial de un entorno de laboratorio en vivo con cámara sintética. Se registra un saludo básico y un momento marcado por el creador."
+      },
+      "created_at": "2026-10-02 18:00:26.014787+00"
+    },
+    {
+      "request_id": "c90108c8-d975-4b22-bbcd-5e22a3be5dc8",
+      "stream_id": "7dbb5db5-91ce-4a8e-b97a-9a7a180789c3",
+      "task": "MODERATION",
+      "model_name": "qwen3:4b-instruct",
+      "status": "LOCAL",
+      "latency_ms": 0,
+      "output": {
+        "reason": "Coincide con una palabra restringida del canal",
+        "category": "RESTRICTED",
+        "provider": "LOCAL_RULES",
+        "confidence": 1
+      },
+      "created_at": "2026-10-02 18:00:19.506537+00"
+    },
+    {
+      "request_id": "58ee43be-06e9-4351-a301-9fa344fe77c2",
+      "stream_id": "7dbb5db5-91ce-4a8e-b97a-9a7a180789c3",
+      "task": "MODERATION",
+      "model_name": "qwen3:4b-instruct",
+      "status": "SUCCEEDED",
+      "latency_ms": 2417,
+      "output": {
+        "reason": "Saludo amable y neutral, sin contenido prohibido ni peligroso.",
+        "category": "SAFE",
+        "provider": "OLLAMA",
+        "confidence": 0
+      },
+      "created_at": "2026-10-02 18:00:15.387012+00"
+    }
+  ]
+}

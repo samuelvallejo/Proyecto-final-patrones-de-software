@@ -27,7 +27,7 @@ function table(s,values,x,y,w,h,widths){const t=s.tables.add({rows:values.length
  table(s,[[copy.text("slideLabelText01"),copy.text('presentationText11'),copy.text("slideLabelText02")],['Frontend','TypeScript / Vite / PWA',copy.text("slideLabelText03")],['Backend','Java 21 / Spring Boot',copy.text('presentationText12')],[copy.text('presentationText13'),'PostgreSQL',copy.text("slideLabelText04")],[copy.text('presentationText14'),copy.text('presentationText15'),copy.text('presentationText16')]],72,178,1136,390,[240,350,546]);text(s,copy.text('presentationText17'),72,600,1100,45,25,false,colors.muted);
 }
 {
- const s=slide(copy.text('presentationText18'),copy.text('presentationText19'));text(s,'64',72,185,320,150,118,true,colors.accent);text(s,copy.text('presentationText20'),75,345,430,55,32);text(s,copy.text('presentationText21'),75,425,430,90,29,false,colors.muted);paragraphs(s,[copy.text('presentationText22'),copy.text('presentationText23'),copy.text('presentationText24'),copy.text('presentationText25')],600,185,590,28,102);
+ const s=slide(copy.text('presentationText18'),copy.text('presentationText19'));text(s,'65',72,185,320,150,118,true,colors.accent);text(s,copy.text('presentationText20'),75,345,430,55,32);text(s,copy.text('presentationText21'),75,425,430,90,29,false,colors.muted);paragraphs(s,[copy.text('presentationText22'),copy.text('presentationText23'),copy.text('presentationText24'),copy.text('presentationText25')],600,185,590,28,102);
 }
 {
  const s=slide(copy.text('presentationText26'),copy.text('presentationText27'));paragraphs(s,[copy.text('presentationText28'),copy.text('presentationText29'),copy.text('presentationText30'),copy.text('presentationText31')],72,185,1110,30,104);text(s,copy.text('presentationText32'),72,614,1100,45,25,false,colors.accent);
@@ -39,7 +39,7 @@ function table(s,values,x,y,w,h,widths){const t=s.tables.add({rows:values.length
  const s=slide(copy.text('presentationText38'),copy.text('presentationText39'));text(s,copy.text('presentationText40'),72,190,550,50,31,true);text(s,'execute(context)\n\ncreateAction()\naction.apply(context)\nreturn action.status()',72,280,520,260,29,false,colors.accent);text(s,copy.text("slideLabelText05"),675,190,535,80,31,true);text(s,copy.text('presentationText41'),675,300,535,250,28);
 }
 {
- const s=slide(copy.text('presentationText42'),copy.text('presentationText43'));table(s,[[copy.text("slideLabelText06"),'ModerationAnalyzer','EditorialAssistant'],['GeminiToolkit',copy.text('presentationText44'),copy.text('presentationText45')],['LocalToolkit',copy.text('presentationText46'),copy.text("slideLabelText07")]],72,215,1136,290,[260,410,466]);text(s,copy.text('presentationText47'),72,560,1100,70,29,false,colors.muted);
+ const s=slide(copy.text('presentationText42'),copy.text('presentationText43'));table(s,[[copy.text("slideLabelText06"),'ModerationAnalyzer','EditorialAssistant'],['OllamaToolkit',copy.text('presentationText44'),copy.text('presentationText45')],['LocalToolkit',copy.text('presentationText46'),copy.text("slideLabelText07")]],72,215,1136,290,[260,410,466]);text(s,copy.text('presentationText47'),72,560,1100,70,29,false,colors.muted);
 }
 {
  const s=slide(copy.text('presentationText48'),copy.text('presentationText49'));text(s,'AiGateway.generate(instruction, input, schema)',72,185,1136,70,31,true,colors.accent);paragraphs(s,[copy.text('presentationText50'),copy.text('presentationText51'),copy.text('presentationText52')],72,300,1060,29,105);

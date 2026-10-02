@@ -82,7 +82,7 @@ Render reemplaza el alojamiento Java de Google para respetar la decisión de no 
 
 ## Comprobación final
 
-1. Backend `UP`, migraciones hasta V3 y PostgreSQL por SSL.
+1. Backend `UP`, migraciones hasta V5 y PostgreSQL por SSL.
 2. Registro, sesión y creación de canal desde Vercel.
 3. Emisor y espectador recibiendo video y chat.
 4. Mensaje restringido en cola y decisión humana.

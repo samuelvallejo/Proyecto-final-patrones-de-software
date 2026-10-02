@@ -8,7 +8,7 @@ Proyecto académico de streaming con frontend **TypeScript estricto / Vite**, ba
 2. Sigue [DESPLIEGUE.md](docs/DESPLIEGUE.md) para publicarla en tus cuentas.
 3. Consulta [PATRONES.md](docs/PATRONES.md) para sustentar los cinco patrones requeridos.
 4. Consulta [BASE_DE_DATOS.md](docs/BASE_DE_DATOS.md), [ARQUITECTURA.md](docs/ARQUITECTURA.md) y [REQUISITOS.md](docs/REQUISITOS.md).
-5. Revisa [PRUEBAS.md](docs/PRUEBAS.md) y la [presentación editable](artifacts/StreamGuard-typescript-presentation.pptx), con su [guion de sustentación](docs/SUSTENTACION.md).
+5. Revisa [PRUEBAS.md](docs/PRUEBAS.md) y la [presentación editable con IA local](artifacts/StreamGuard-cloud-local-ai-presentation.pptx), con su [guion de sustentación](docs/SUSTENTACION.md).
 6. Consulta [IDIOMAS.md](docs/IDIOMAS.md): código en inglés y textos de la aplicación en recursos de español.
 7. Consulta [IA_LOCAL.md](docs/IA_LOCAL.md) para iniciar el modelo y el túnel después de reiniciar el computador.
 
@@ -38,7 +38,7 @@ Proyecto académico de streaming con frontend **TypeScript estricto / Vite**, ba
 
 ```text
 backend/                     API Java, seguridad, WebSocket, IA y pruebas
-  src/main/resources/db/     Migraciones PostgreSQL V1, V2 y V3
+  src/main/resources/db/     Migraciones PostgreSQL V1 a V5
 frontend/src/                Interfaz, API, WebRTC y PWA en TypeScript
 frontend/public/             Catálogo en español, iconos y manifest
 frontend/index.html          Entrada HTML compilada por Vite
@@ -65,4 +65,4 @@ El modelo incluye tablas para futuras extensiones (suscripciones, insignias, emo
 
 ## Referencias oficiales
 
-Vite compila TypeScript y prepara los archivos estáticos para el navegador: [Vite](https://vite.dev/guide/). El proyecto comprueba tipos antes de compilar: [TypeScript estricto](https://www.typescriptlang.org/tsconfig/strict.html). Vercel sirve la salida `frontend/dist`: [configuración de compilaciones](https://vercel.com/docs/builds/configure-a-build). Render despliega Docker: [servicios web](https://render.com/docs/web-services), [límites del plan gratuito](https://render.com/docs/free). Supabase proporciona PostgreSQL: [Spring Boot y pooler](https://supabase.com/docs/guides/getting-started/quickstarts/spring-boot). La clave de Gemini se usa exclusivamente desde el backend: [claves de API](https://ai.google.dev/gemini-api/docs/api-key).
+Vite compila TypeScript y prepara los archivos estáticos para el navegador: [Vite](https://vite.dev/guide/). El proyecto comprueba tipos antes de compilar: [TypeScript estricto](https://www.typescriptlang.org/tsconfig/strict.html). Vercel sirve la salida `frontend/dist`: [configuración de compilaciones](https://vercel.com/docs/builds/configure-a-build). Render despliega Docker: [servicios web](https://render.com/docs/web-services), [límites del plan gratuito](https://render.com/docs/free). Supabase proporciona PostgreSQL: [Spring Boot y pooler](https://supabase.com/docs/guides/getting-started/quickstarts/spring-boot). Ollama ejecuta [Qwen3:4b-instruct](https://ollama.com/library/qwen3:4b-instruct) y produce [salidas estructuradas](https://docs.ollama.com/api/chat); la pasarela autenticada se conecta mediante [ngrok](https://ngrok.com/docs/pricing-limits/free-plan-limits).

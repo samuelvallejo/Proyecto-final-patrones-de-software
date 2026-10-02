@@ -37,7 +37,7 @@ Los permisos se comprueban por canal en servicios del backend. Los hashes de con
 | 21 | `message_reports` | Reportes realizados por espectadores | Extensión |
 | 22 | `moderation_policies` | Niveles, umbrales y medidas automáticas | Operativa |
 | 23 | `blocked_words` | Restricciones explícitas de palabras por canal | Operativa |
-| 24 | `blocked_topics` | Temas enviados como contexto a Gemini | Operativa |
+| 24 | `blocked_topics` | Temas enviados como contexto al modelo de IA | Operativa |
 | 25 | `moderation_rules` | Extensión para acciones específicas por categoría | Extensión |
 | 26 | `ai_providers` | Catálogo de proveedores de IA | Catálogo |
 | 27 | `ai_models` | Catálogo de modelos y capacidades | Catálogo |

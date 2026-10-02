@@ -1,6 +1,6 @@
 # Trazabilidad del proyecto final
 
-Las imágenes adjuntas se tomaron como requisitos académicos y explicación de arquitectura. El caso de estudio y las preferencias de PostgreSQL, Gemini, Vercel y Render Free provienen de la solicitud del usuario. La solicitud posterior cambia el frontend a TypeScript y conserva Java en el backend.
+Las imágenes adjuntas se tomaron como requisitos académicos y explicación de arquitectura. El caso de estudio y las preferencias de PostgreSQL, Vercel y Render Free provienen de la solicitud del usuario. Las solicitudes posteriores cambian el frontend a TypeScript, conservan Java en el backend y sustituyen Gemini por Ollama local mediante ngrok.
 
 | Requisito | Evidencia entregada |
 |---|---|

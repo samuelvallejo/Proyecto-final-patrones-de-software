@@ -1,5 +1,6 @@
 {
   "passed": true,
+  "webUrl": "https://streamguard-delta.vercel.app",
   "results": [
     "Desktop loads the compiled TypeScript UI",
     "Registration, login and channel creation through TypeScript forms",

@@ -1,6 +1,6 @@
 # Código en inglés e interfaz en español
 
-Las clases, métodos, variables, claves JSON de la API, consultas, comentarios, instrucciones a Gemini y diagnósticos técnicos se escriben en inglés. Las instrucciones a Gemini exigen explícitamente que sus respuestas visibles se generen en español.
+Las clases, métodos, variables, claves JSON de la API, consultas, comentarios, instrucciones al modelo y diagnósticos técnicos se escriben en inglés. Las instrucciones y los esquemas exigen explícitamente que las respuestas visibles del modelo local se generen en español.
 
 Los textos en español son **datos de traducción**, separados del código ejecutable:
 
