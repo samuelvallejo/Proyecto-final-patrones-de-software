@@ -52,6 +52,47 @@ public class OllamaAdapter implements AiGateway {
     return model;
   }
 
+  @org.springframework.context.event.EventListener(
+      org.springframework.boot.context.event.ApplicationReadyEvent.class)
+  public void diagnoseConnection() {
+    if (!configured() || !"true".equals(System.getenv("AI_CONNECTION_CHECK"))) return;
+    var log = org.slf4j.LoggerFactory.getLogger(OllamaAdapter.class);
+    try {
+      log.info(
+          "AI gateway DNS: {}",
+          java.util.Arrays.toString(java.net.InetAddress.getAllByName(URI.create(url).getHost())));
+    } catch (Exception e) {
+      log.warn("AI gateway DNS failed: {}", e.toString());
+    }
+    try {
+      var response =
+          http.send(
+              HttpRequest.newBuilder(URI.create(url + "/health"))
+                  .timeout(Duration.ofSeconds(10))
+                  .GET()
+                  .build(),
+              HttpResponse.BodyHandlers.discarding());
+      log.info("AI gateway HttpClient anonymous health HTTP {}", response.statusCode());
+    } catch (Exception e) {
+      log.warn("AI gateway HttpClient health failed: {}", e.toString());
+      if (e.getCause() != null)
+        log.warn("AI gateway HttpClient cause: {}", e.getCause().toString());
+    }
+    try {
+      var connection =
+          (java.net.HttpURLConnection) URI.create(url + "/health").toURL().openConnection();
+      connection.setConnectTimeout(8000);
+      connection.setReadTimeout(10000);
+      try {
+        log.info("AI gateway URLConnection anonymous health HTTP {}", connection.getResponseCode());
+      } finally {
+        connection.disconnect();
+      }
+    } catch (Exception e) {
+      log.warn("AI gateway URLConnection health failed: {}", e.toString());
+    }
+  }
+
   public JsonNode generate(String instruction, JsonNode input, JsonNode schema) {
     if (!configured()) throw new IllegalStateException("Local AI gateway is not configured");
     try {
