@@ -52,44 +52,22 @@ public class OllamaAdapter implements AiGateway {
     return model;
   }
 
-  @org.springframework.context.event.EventListener(
-      org.springframework.boot.context.event.ApplicationReadyEvent.class)
-  public void diagnoseConnection() {
-    if (!configured() || !"true".equals(System.getenv("AI_CONNECTION_CHECK"))) return;
-    var log = org.slf4j.LoggerFactory.getLogger(OllamaAdapter.class);
+  private HttpResponse<java.io.InputStream> send(HttpRequest request)
+      throws java.io.IOException, InterruptedException {
+    long deadline = System.nanoTime() + Duration.ofSeconds(50).toNanos();
     try {
-      log.info(
-          "AI gateway DNS: {}",
-          java.util.Arrays.toString(java.net.InetAddress.getAllByName(URI.create(url).getHost())));
-    } catch (Exception e) {
-      log.warn("AI gateway DNS failed: {}", e.toString());
-    }
-    try {
-      var response =
-          http.send(
-              HttpRequest.newBuilder(URI.create(url + "/health"))
-                  .timeout(Duration.ofSeconds(10))
-                  .GET()
-                  .build(),
-              HttpResponse.BodyHandlers.discarding());
-      log.info("AI gateway HttpClient anonymous health HTTP {}", response.statusCode());
-    } catch (Exception e) {
-      log.warn("AI gateway HttpClient health failed: {}", e.toString());
-      if (e.getCause() != null)
-        log.warn("AI gateway HttpClient cause: {}", e.getCause().toString());
-    }
-    try {
-      var connection =
-          (java.net.HttpURLConnection) URI.create(url + "/health").toURL().openConnection();
-      connection.setConnectTimeout(8000);
-      connection.setReadTimeout(10000);
-      try {
-        log.info("AI gateway URLConnection anonymous health HTTP {}", connection.getResponseCode());
-      } finally {
-        connection.disconnect();
-      }
-    } catch (Exception e) {
-      log.warn("AI gateway URLConnection health failed: {}", e.toString());
+      return http.send(request, HttpResponse.BodyHandlers.ofInputStream());
+    } catch (java.io.IOException failure) {
+      long remaining = deadline - System.nanoTime();
+      if (failure instanceof HttpTimeoutException || remaining < Duration.ofSeconds(1).toNanos())
+        throw failure;
+      // Inference has no external side effects. Retry one reset before response headers,
+      // preserving the original time budget; HTTP errors and invalid output are not retried.
+      var retry =
+          HttpRequest.newBuilder(request, (name, value) -> true)
+              .timeout(Duration.ofNanos(remaining))
+              .build();
+      return http.send(retry, HttpResponse.BodyHandlers.ofInputStream());
     }
   }
 
@@ -115,7 +93,7 @@ public class OllamaAdapter implements AiGateway {
                               "model",
                               model))))
               .build();
-      var response = http.send(request, HttpResponse.BodyHandlers.ofInputStream());
+      var response = send(request);
       try (var body = response.body()) {
         byte[] bytes = body.readNBytes(65537);
         if (response.statusCode() != 200 || bytes.length > 65536)

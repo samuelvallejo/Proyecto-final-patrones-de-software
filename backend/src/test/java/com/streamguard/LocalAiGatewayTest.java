@@ -9,6 +9,7 @@ import com.sun.net.httpserver.HttpServer;
 import java.net.*;
 import java.net.http.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
@@ -103,6 +104,57 @@ class LocalAiGatewayTest {
             request.POST(HttpRequest.BodyPublishers.ofString(body)).build(),
             HttpResponse.BodyHandlers.discarding())
         .statusCode();
+  }
+
+  @Test
+  void adapterRecoversOneConnectionResetWithoutRetryingHttpErrors() throws Exception {
+    var attempts = new AtomicInteger();
+    var gateway = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    gateway.createContext(
+        "/generate",
+        exchange -> {
+          exchange.getRequestBody().readAllBytes();
+          if (attempts.incrementAndGet() == 1) {
+            exchange.close();
+            return;
+          }
+          byte[] response =
+              json.writeValueAsBytes(
+                  Map.of("model", "qwen3:4b-instruct", "output", Map.of("ok", true)));
+          exchange.sendResponseHeaders(200, response.length);
+          exchange.getResponseBody().write(response);
+          exchange.close();
+        });
+    gateway.start();
+    try {
+      var adapter =
+          new OllamaAdapter(
+              json,
+              "http://127.0.0.1:" + gateway.getAddress().getPort(),
+              token,
+              "qwen3:4b-instruct");
+      assertTrue(
+          adapter
+              .generate("test", json.createObjectNode(), json.createObjectNode())
+              .path("ok")
+              .asBoolean());
+      assertEquals(2, attempts.get());
+      gateway.removeContext("/generate");
+      gateway.createContext(
+          "/generate",
+          exchange -> {
+            exchange.getRequestBody().readAllBytes();
+            attempts.incrementAndGet();
+            exchange.sendResponseHeaders(401, -1);
+            exchange.close();
+          });
+      assertThrows(
+          IllegalStateException.class,
+          () -> adapter.generate("test", json.createObjectNode(), json.createObjectNode()));
+      assertEquals(3, attempts.get());
+    } finally {
+      gateway.stop(0);
+    }
   }
 
   @Test
