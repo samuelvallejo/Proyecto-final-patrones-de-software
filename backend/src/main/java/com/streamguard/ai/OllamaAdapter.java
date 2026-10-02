@@ -16,7 +16,10 @@ public class OllamaAdapter implements AiGateway {
   private final String token;
   private final String model;
   private final HttpClient http =
-      HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(8)).build();
+      HttpClient.newBuilder()
+          .version(HttpClient.Version.HTTP_1_1)
+          .connectTimeout(Duration.ofSeconds(8))
+          .build();
 
   public OllamaAdapter(
       ObjectMapper json,
@@ -89,7 +92,11 @@ public class OllamaAdapter implements AiGateway {
       throw new IllegalStateException("Local AI request interrupted", e);
     } catch (java.io.IOException e) {
       throw new IllegalStateException(
-          "Could not obtain a valid local AI response: " + e.getClass().getSimpleName(), e);
+          "Could not obtain a valid local AI response: "
+              + e.getClass().getSimpleName()
+              + ": "
+              + e.getMessage(),
+          e);
     }
   }
 }
