@@ -192,6 +192,8 @@ public interface AiToolkitFactory {
                     + " transcripts, and highlights. Do not claim to have watched video or listened"
                     + " to audio. State when information is insufficient. Suggest a clip title of"
                     + " at most 120 characters, a description, up to 8 topics, and up to 8 repeated"
+                    + " questions. Include only questions that occur at least twice in the chat;"
+                    + " copy each question exactly from the chat. Never suggest or invent new"
                     + " questions. Do not invent answers; state when questions were unanswered."
                     + " Write all editorial output in Spanish.",
                 context,
@@ -203,8 +205,28 @@ public interface AiToolkitFactory {
             || !out.path("topics").isArray()
             || !out.path("faqs").isArray())
           throw new IllegalArgumentException("Invalid editorial response");
+        if (out.path("topics").size() > 8 || out.path("faqs").size() > 8)
+          throw new IllegalArgumentException("Too many editorial items");
+        var occurrences = new HashMap<String, Integer>();
+        for (var message : context.path("messages")) {
+          String content = message.path("content").asText();
+          if (content.contains("?")) occurrences.merge(questionKey(content), 1, Integer::sum);
+        }
+        var supportedFaqs = json.createArrayNode();
+        var seen = new HashSet<String>();
+        for (var faq : out.path("faqs")) {
+          if (!faq.path("question").isTextual() || !faq.path("answer").isTextual())
+            throw new IllegalArgumentException("Invalid FAQ response");
+          String key = questionKey(faq.path("question").asText());
+          if (occurrences.getOrDefault(key, 0) >= 2 && seen.add(key)) supportedFaqs.add(faq);
+        }
+        ((com.fasterxml.jackson.databind.node.ObjectNode) out).set("faqs", supportedFaqs);
         return out;
       };
+    }
+
+    private static String questionKey(String question) {
+      return normalize(question).replaceAll("[^a-z0-9]+", " ").trim();
     }
   }
 

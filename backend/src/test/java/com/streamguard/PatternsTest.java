@@ -84,4 +84,32 @@ class PatternsTest {
         .send(user, TestFixtures.text("patternsTestText07"));
     assertEquals(List.of("CLIP:clip ready", TestFixtures.text("patternsTestText08")), sent);
   }
+
+  @Test
+  void editorialRejectsInventedFaqsAndRetainsOnlyRepeatedChatQuestions() {
+    var factory =
+        new AiToolkitFactory.OllamaToolkit(
+            (instruction, input, schema) ->
+                json.valueToTree(
+                    Map.of(
+                        "summary",
+                        "Fixture",
+                        "title",
+                        "Fixture",
+                        "description",
+                        "Fixture",
+                        "topics",
+                        List.of(),
+                        "faqs",
+                        List.of(
+                            Map.of("question", "Where?", "answer", "Here"),
+                            Map.of("question", "Invented?", "answer", "Unknown")))),
+            json);
+    var context =
+        json.valueToTree(
+            Map.of("messages", List.of(Map.of("content", "Where?"), Map.of("content", "Where?"))));
+    var result = factory.editorial().compose(context);
+    assertEquals(1, result.path("faqs").size());
+    assertEquals("Where?", result.path("faqs").get(0).path("question").asText());
+  }
 }
