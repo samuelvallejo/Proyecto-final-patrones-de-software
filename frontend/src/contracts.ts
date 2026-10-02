@@ -12,7 +12,7 @@ export function text(value: Row | null, key: string): string {
 export function flag(value: Row, key: string): boolean { return value[key] === true; }
 export interface MediaConfig { iceServers?: RTCIceServer[] }
 export interface LiveEvent {
-  type: string; message?: Json; body?: string; viewers?: number; error?: boolean;
+  type: string; message?: Json; body?: string; viewers?: number; error?: boolean; hostOnline?: boolean;
   peerId?: string; from?: string; highlightId?: string; text?: string;
   payload?: {description?: RTCSessionDescriptionInit; candidate?: RTCIceCandidateInit};
 }

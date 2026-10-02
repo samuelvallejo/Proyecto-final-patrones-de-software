@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: streamguard-backend
+    runtime: docker
+    plan: free
+    region: virginia
+    branch: codex/streamguard
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: cloud
+      - key: JDBC_DATABASE_URL
+        sync: false
+      - key: PGUSER
+        sync: false
+      - key: PGPASSWORD
+        sync: false
+      - key: FRONTEND_ORIGIN
+        value: https://streamguard-delta.vercel.app
+      - key: MEDIA_STORAGE
+        value: database
+      - key: MEDIA_DIR
+        value: /tmp/streamguard/media
+      - key: MEDIA_WORK_DIR
+        value: /tmp/streamguard/work
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=50 -XX:ActiveProcessorCount=1
+      - key: MAX_VIEWERS
+        value: 6
+      - key: GEMINI_API_KEY
+        sync: false

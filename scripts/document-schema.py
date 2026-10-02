@@ -3,7 +3,7 @@ from pathlib import Path
 import re,json
 root=Path(__file__).resolve().parent.parent
 copy=json.loads((root/'scripts/locales/schema.es.json').read_text(encoding='utf-8'))
-ddl=(root/'backend/src/main/resources/db/migration/V1__platform.sql').read_text(encoding='utf-8')
+ddl='\n'.join(p.read_text(encoding='utf-8') for p in sorted((root/'backend/src/main/resources/db/migration').glob('V*__*.sql')))
 tables=re.findall(r'CREATE TABLE (\w+)\s*\((.*?)\);',ddl,re.S)
 extensions=set('user_devices tags stream_tags message_reactions message_reports moderation_rules sanction_appeals clip_tags clip_exports clip_shares audience_reactions channel_webhooks webhook_deliveries channel_subscriptions user_badges emotes channel_emotes playlists playlist_items'.split())
 catalogs=set('roles categories ai_providers ai_models subscription_plans badges'.split())
@@ -44,6 +44,7 @@ descriptions={
  'sanction_appeals':copy["schemaText31"],
  'user_warnings':copy["schemaText32"],
  'media_assets':copy["schemaText33"],
+ 'media_asset_contents':copy["durableMediaContent"],
  'recording_segments':copy["schemaText34"],
  'stream_highlights':copy["schemaText35"],
  'clips':copy["schemaText36"],
@@ -73,7 +74,7 @@ descriptions={
  'playlists':copy["schemaText57"],
  'playlist_items':copy["schemaText58"],
 }
-assert len(tables)==64 and set(descriptions)=={name for name,_ in tables}
+assert len(tables)==65 and set(descriptions)=={name for name,_ in tables}
 relations=[]
 for name,body in tables:
  for target in re.findall(r'REFERENCES (\w+)\(',body):relations.append((target,name))

@@ -6,7 +6,7 @@ La presentación editable está en `artifacts/StreamGuard-typescript-presentatio
 
 1. Explica por qué un chat de streaming necesita reglas automáticas y revisión humana.
 2. Muestra la separación frontend/backend/base de datos/IA y la compilación de TypeScript con Vite para Vercel.
-3. Describe el modelo relacional, verifica las 64 tablas y señala relaciones concretas del chat y de los clips.
+3. Describe el modelo relacional, verifica las 65 tablas y señala relaciones concretas del chat y de los clips.
 4. Recorre los cinco patrones en el código y vincula cada uno con una acción de la aplicación.
 5. Demuestra un directo con dos cuentas. Usa cámara sintética o una cámara propia con permisos.
 6. Envía un mensaje permitido y otro con una palabra restringida. Apruébalo como moderador y muestra el cambio visible.
@@ -17,7 +17,7 @@ La presentación editable está en `artifacts/StreamGuard-typescript-presentatio
 
 ## Preguntas técnicas esperables
 
-**¿Qué lenguaje usa cada capa?** El frontend usa TypeScript estricto en `frontend/src/`, que Vite compila para el navegador. El backend usa Java 21 / Spring Boot. PostgreSQL conserva las 64 tablas y sus relaciones. Los cinco patrones principales se implementan en el backend Java.
+**¿Qué lenguaje usa cada capa?** El frontend usa TypeScript estricto en `frontend/src/`, que Vite compila para el navegador. El backend usa Java 21 / Spring Boot. PostgreSQL conserva las 65 tablas y sus relaciones. Los cinco patrones principales se implementan en el backend Java.
 
 **¿Por qué no se llama a Gemini desde el frontend?** El backend conserva la clave, aplica permisos y registra/valida la respuesta antes de ejecutar una acción.
 

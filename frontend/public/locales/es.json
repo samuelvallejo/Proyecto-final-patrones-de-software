@@ -1,4 +1,5 @@
 {
+  "mediaReconnecting": "Reconectando con la transmisión…",
   "uiOnResponseReceivedText01": "No se pudo mostrar la respuesta del servidor",
   "uiOnResponseReceivedText02": "No se pudo completar la operación (",
   "uiOnErrorText03": "No se pudo conectar al backend. Revisa la dirección de la API y vuelve a intentar.",

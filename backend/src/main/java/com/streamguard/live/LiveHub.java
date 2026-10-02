@@ -6,6 +6,11 @@ import com.streamguard.core.*;
 import com.streamguard.i18n.Messages;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
@@ -21,6 +26,8 @@ public class LiveHub extends TextWebSocketHandler {
   private final int maxViewers;
   private final Map<String, Peer> peers = new ConcurrentHashMap<>();
   private final Map<UUID, Room> rooms = new ConcurrentHashMap<>();
+  private final ScheduledExecutorService disconnects = Executors.newSingleThreadScheduledExecutor(
+      Thread.ofPlatform().daemon().name("host-disconnect").factory());
 
   private record Peer(
       WebSocketSession socket,
@@ -32,6 +39,7 @@ public class LiveHub extends TextWebSocketHandler {
 
   private static class Room {
     String host;
+    ScheduledFuture<?> expiry;
     final Set<String> viewers = ConcurrentHashMap.newKeySet();
   }
 
@@ -94,7 +102,10 @@ public class LiveHub extends TextWebSocketHandler {
                     stream,
                     user);
         peers.put(socket.getId(), new Peer(wrapped, stream, user, host, moderator, view));
-        if (host) room.host = socket.getId();
+        if (host) {
+          if (room.expiry != null) { room.expiry.cancel(false); room.expiry = null; }
+          room.host = socket.getId();
+        }
         else room.viewers.add(socket.getId());
         send(
             wrapped,
@@ -137,7 +148,7 @@ public class LiveHub extends TextWebSocketHandler {
               target.socket(),
               Map.of("type", "signal", "from", socket.getId(), "payload", data.path("payload")));
         } else if (type.equals("ping")) send(sender.socket(), Map.of("type", "pong"));
-        else throw new ApiError(400, "Evento desconocido");
+        else throw new ApiError(400, Messages.text("liveHubUnknownEvent"));
       }
     } catch (Exception e) {
       send(
@@ -163,20 +174,27 @@ public class LiveHub extends TextWebSocketHandler {
     room.viewers.remove(socket.getId());
     if (peer.host()) {
       room.host = null;
-      db.exec(
-          "UPDATE streams SET status='ENDED',ended_at=now() WHERE id=? AND status='LIVE'",
-          peer.stream());
-      broadcast(
-          peer.stream(),
-          Map.of("type", "ended", "message", Messages.text("liveHubAfterConnectionClosedText09")));
+      // Keep short network interruptions from ending a broadcast before the owner reconnects.
+      room.expiry = disconnects.schedule(() -> expireHost(peer.stream(), room), 45, TimeUnit.SECONDS);
     } else if (room.host != null && peers.containsKey(room.host))
       send(peers.get(room.host).socket(), Map.of("type", "viewer-left", "peerId", socket.getId()));
     broadcast(
         peer.stream(),
         Map.of(
             "type", "presence", "viewers", room.viewers.size(), "hostOnline", room.host != null));
-    if (room.host == null && room.viewers.isEmpty()) rooms.remove(peer.stream());
+    if (room.host == null && room.expiry == null && room.viewers.isEmpty()) rooms.remove(peer.stream());
   }
+
+  private synchronized void expireHost(UUID stream, Room room) {
+    if (rooms.get(stream) != room || room.host != null) return;
+    room.expiry = null;
+    db.exec("UPDATE streams SET status='ENDED',ended_at=now() WHERE id=? AND status='LIVE'", stream);
+    broadcast(stream, Map.of("type", "ended", "message", Messages.text("liveHubAfterConnectionClosedText09")));
+    if (room.viewers.isEmpty()) rooms.remove(stream);
+  }
+
+  @PreDestroy
+  void close() { disconnects.shutdownNow(); }
 
   public int viewers(UUID stream) {
     Room r = rooms.get(stream);
@@ -185,7 +203,7 @@ public class LiveHub extends TextWebSocketHandler {
 
   public boolean hosting(UUID stream) {
     Room r = rooms.get(stream);
-    return r != null && r.host != null;
+    return r != null && (r.host != null || r.expiry != null);
   }
 
   public void broadcast(UUID stream, Object payload) {

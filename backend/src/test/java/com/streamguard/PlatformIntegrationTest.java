@@ -20,6 +20,7 @@ import org.springframework.util.*;
 class PlatformIntegrationTest {
   @Autowired TestRestTemplate http;
   @Autowired Db db;
+  @Autowired MediaService media;
 
   @Value("${FFMPEG_BIN:ffmpeg}")
   String ffmpeg;
@@ -85,9 +86,9 @@ class PlatformIntegrationTest {
   }
 
   @Test
-  void schemaHas64DomainTablesAndForeignKeys() {
+  void schemaHas65DomainTablesAndForeignKeys() {
     assertEquals(
-        64,
+        65,
         db.count(
             "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND"
                 + " table_type='BASE TABLE' AND table_name<>'flyway_schema_history'"));
@@ -320,7 +321,7 @@ class PlatformIntegrationTest {
         call(
                 HttpMethod.POST,
                 "/streams",
-                Map.of("title", "Duplicado", "description", ""),
+                Map.of("title", "Duplicate", "description", ""),
                 owner.token())
             .getStatusCode()
             .value());
@@ -382,6 +383,8 @@ class PlatformIntegrationTest {
     assertEquals(200, clip.getStatusCode().value());
     String clipId = clip.getBody().get("id").toString(),
         asset = clip.getBody().get("asset_id").toString();
+    assertEquals(1, db.count("SELECT count(*) FROM media_asset_contents WHERE asset_id=?", UUID.fromString(asset)));
+    String storageKey = db.one("SELECT storage_key FROM media_assets WHERE id=?", UUID.fromString(asset)).get("storage_key").toString();
     assertEquals(
         403, http.getForEntity("/api/media/" + asset, String.class).getStatusCode().value());
     assertEquals(
@@ -404,13 +407,17 @@ class PlatformIntegrationTest {
             .value());
     assertEquals(
         200, http.getForEntity("/api/media/" + asset, byte[].class).getStatusCode().value());
+    byte[] initialDownload = http.getForEntity("/api/media/" + asset, byte[].class).getBody();
+    Files.delete(media.path(storageKey));
+    assertArrayEquals(initialDownload, http.getForEntity("/api/media/" + asset, byte[].class).getBody(),
+        "Published clips must survive loss of the host's local cache");
     var edit =
         call(
             HttpMethod.PUT,
             "/clips/" + clipId,
             Map.of(
                 "title",
-                "Clip recortado",
+                "Trimmed clip",
                 "description",
                 TestFixtures.text("platformIntegrationTestText11"),
                 "start",

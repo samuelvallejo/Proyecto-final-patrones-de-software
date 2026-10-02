@@ -1,6 +1,6 @@
 # StreamGuard · En vivo, con confianza
 
-Proyecto académico de streaming con frontend **TypeScript estricto / Vite**, backend **Java 21 / Spring Boot**, PostgreSQL con **64 tablas de dominio**, y un adaptador real para la API de **Gemini**. Interfaz PWA en español adaptable a computador y celular. Configuración de despliegue: frontend en **Vercel**, backend y PostgreSQL en **Railway**.
+Proyecto académico de streaming con frontend **TypeScript estricto / Vite**, backend **Java 21 / Spring Boot**, PostgreSQL con **65 tablas de dominio**, y un adaptador real para la API de **Gemini**. Interfaz PWA en español adaptable a computador y celular. Configuración gratuita: frontend en **Vercel**, backend en **Render Free** y PostgreSQL en **Supabase**.
 
 ## Comienza aquí
 
@@ -37,15 +37,16 @@ Proyecto académico de streaming con frontend **TypeScript estricto / Vite**, ba
 
 ```text
 backend/                     API Java, seguridad, WebSocket, IA y pruebas
-  src/main/resources/db/     Migraciones PostgreSQL V1 y V2
+  src/main/resources/db/     Migraciones PostgreSQL V1, V2 y V3
 frontend/src/                Interfaz, API, WebRTC y PWA en TypeScript
 frontend/public/             Catálogo en español, iconos y manifest
 frontend/index.html          Entrada HTML compilada por Vite
 frontend/tsconfig*.json      Tipado estricto de interfaz y service worker
 scripts/                    Compilación, servidor local y pruebas de navegador
 docs/                       Guías, arquitectura, requisitos y sustentación
-Dockerfile                  Backend Java y FFmpeg para Railway
-railway.toml                Salud y configuración del backend
+Dockerfile                  Backend Java y FFmpeg
+render.yaml                 Servicio Render Free y variables requeridas
+railway.toml                Configuración alternativa de Railway
 vercel.json                 Compilación y publicación del frontend
 compose.yml                 PostgreSQL y backend para desarrollo con Docker
 .github/workflows/ci.yml     Compilación y pruebas automatizadas
@@ -53,7 +54,7 @@ compose.yml                 PostgreSQL y backend para desarrollo con Docker
 
 ## Alcance de esta versión
 
-Es una implementación funcional para demostración académica y comunidades pequeñas. WebRTC distribuye una conexión desde el creador a cada espectador: el límite predeterminado es **6 espectadores por directo**. Se despliega **una réplica** del backend y se usa un volumen persistente para los videos. Para audiencias masivas se necesita un SFU o servicio multimedia, CDN, almacenamiento de objetos y distribución de eventos entre réplicas.
+Es una implementación funcional para demostración académica y comunidades pequeñas. WebRTC distribuye una conexión desde el creador a cada espectador: el límite predeterminado es **6 espectadores por directo**. Se despliega **una réplica** del backend. En el perfil cloud, PostgreSQL conserva los clips y el disco del backend sirve como copia temporal. Render Free se suspende después de periodos sin tráfico y el primer acceso puede tardar en despertar el servicio. Los clips y las tablas comparten la cuota gratuita de Supabase. Para audiencias masivas se necesita un SFU o servicio multimedia, CDN, almacenamiento de objetos y distribución de eventos entre réplicas.
 
 Los clips capturan el segmento actual o el segmento reciente de hasta aproximadamente **15 segundos**; no se guarda automáticamente todo el directo. La detección de audio mide energía, no interpreta escenas. Los resúmenes analizan chat, marcadores y transcripción disponible, no el video completo. La transcripción depende de la API de voz del navegador y de permisos del micrófono. Los clips se generan como WebM; los enlaces de compartir abren el clip dentro de la plataforma.
 
@@ -63,4 +64,4 @@ El modelo incluye tablas para futuras extensiones (suscripciones, insignias, emo
 
 ## Referencias oficiales
 
-Vite compila TypeScript y prepara los archivos estáticos para el navegador: [Vite](https://vite.dev/guide/). El proyecto comprueba tipos antes de compilar: [TypeScript estricto](https://www.typescriptlang.org/tsconfig/strict.html). Vercel sirve la salida `frontend/dist`: [configuración de compilaciones](https://vercel.com/docs/builds/configure-a-build). Railway despliega Spring Boot mediante Docker: [guía oficial](https://docs.railway.com/guides/spring-boot). La clave de Gemini se usa exclusivamente desde el backend: [claves de API](https://ai.google.dev/gemini-api/docs/api-key).
+Vite compila TypeScript y prepara los archivos estáticos para el navegador: [Vite](https://vite.dev/guide/). El proyecto comprueba tipos antes de compilar: [TypeScript estricto](https://www.typescriptlang.org/tsconfig/strict.html). Vercel sirve la salida `frontend/dist`: [configuración de compilaciones](https://vercel.com/docs/builds/configure-a-build). Render despliega Docker: [servicios web](https://render.com/docs/web-services), [límites del plan gratuito](https://render.com/docs/free). Supabase proporciona PostgreSQL: [Spring Boot y pooler](https://supabase.com/docs/guides/getting-started/quickstarts/spring-boot). La clave de Gemini se usa exclusivamente desde el backend: [claves de API](https://ai.google.dev/gemini-api/docs/api-key).

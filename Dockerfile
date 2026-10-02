@@ -9,5 +9,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -r
 WORKDIR /app
 COPY --from=build /workspace/backend/target/backend-1.0.0.jar /app/backend.jar
 ENV MEDIA_DIR=/data/media
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=50 -XX:ActiveProcessorCount=1"
 EXPOSE 8080
-ENTRYPOINT ["java","-XX:MaxRAMPercentage=70","-jar","/app/backend.jar"]
+ENTRYPOINT ["java","-jar","/app/backend.jar"]

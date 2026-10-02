@@ -4,6 +4,7 @@
 frontend/dist/
 **/gwt-unitCache/
 .vercel/
+.firebase/
 .env
 .env.*
 !.env.example
@@ -11,5 +12,7 @@ frontend/dist/
 node_modules/
 artifacts/test-media/
 artifacts/browser-failure.png
+artifacts/viewer-failure.png
 artifacts/*.jar
 artifacts/*.zip
+

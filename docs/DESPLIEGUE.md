@@ -1,121 +1,88 @@
-# Publicación en Railway y Vercel
+# Publicación gratuita: Supabase, Render y Vercel
 
-El código queda preparado para el despliegue. Las cuentas, proyectos y claves se configuran por el propietario. El orden recomendado es **PostgreSQL → backend Railway → frontend Vercel → origen permitido**.
+Los visitantes acceden por Vercel y no instalan PostgreSQL, Java ni HeidiSQL. Render Free ejecuta el backend Java y Supabase conserva la base de datos. La rama del [repositorio](https://github.com/samuelvallejo/Proyecto-final-patrones-de-software) es `codex/streamguard`.
 
-## 1. Repositorio
+## PostgreSQL y otros computadores
 
-Usa [Proyecto-final-patrones-de-software](https://github.com/samuelvallejo/Proyecto-final-patrones-de-software), rama **`codex/streamguard`**. Selecciona esa rama al conectar los servicios. No subas `.env`, claves, `.tools`, `.local` ni bases de datos de pruebas.
+Proyecto [streamguard en Supabase](https://supabase.com/dashboard/project/jegiuidrxxyijutqoowd), región `us-east-1`, esquema privado `streamguard`. El backend conecta mediante el pooler de sesiones, SSL y un rol dedicado sin privilegios de superusuario. El frontend no recibe credenciales ni consulta las tablas directamente. Las tablas tienen RLS y no se exponen a las claves públicas de Supabase.
 
-## 2. PostgreSQL en Railway
+Un administrador puede usar HeidiSQL, DBeaver o pgAdmin con PostgreSQL y estos parámetros:
 
-1. Entra a [Railway](https://railway.com), crea un proyecto y agrega el servicio **PostgreSQL**.
-2. Mantén la base y el backend en el mismo proyecto y entorno.
-3. Identifica el nombre del servicio PostgreSQL. Los ejemplos siguientes usan **Postgres**; sustitúyelo si tu servicio tiene otro nombre.
-4. No necesitas exponer PostgreSQL al frontend. El backend se conecta por la red privada.
+| Campo | Valor |
+|---|---|
+| Host | `aws-0-us-east-1.pooler.supabase.com` |
+| Puerto | `5432` |
+| Base | `postgres` |
+| Usuario del backend | `streamguard_backend.jegiuidrxxyijutqoowd` |
+| Contraseña | Credencial privada configurada en Render |
+| SSL | Obligatorio |
+| Esquema | `streamguard` |
 
-La plataforma proporciona las variables de conexión del servicio PostgreSQL. [Documentación de PostgreSQL](https://docs.railway.com/databases/postgresql).
+Usa un rol de lectura separado para consultas administrativas frecuentes; no distribuyas el usuario del backend a los visitantes. [Roles PostgreSQL](https://supabase.com/docs/guides/database/postgres/roles), [Spring Boot y pooler](https://supabase.com/docs/guides/getting-started/quickstarts/spring-boot).
 
-## 3. Backend Java en Railway
+Se inicializó el snapshot exacto V1/V2. El perfil `cloud` reconoce esa base como versión 2 y Flyway aplica V3 y versiones posteriores. Hay **65 tablas de dominio y 102 referencias de clave foránea**, más `flyway_schema_history`. `scripts/prepare-supabase.mjs` genera un bootstrap exclusivamente para un esquema nuevo; no lo ejecutes sobre un proyecto ya utilizado. No edites migraciones aplicadas.
 
-1. Agrega un servicio desde tu repositorio de GitHub. Usa la **raíz del repositorio (`/`)**, ya que el Dockerfile está allí.
-2. Selecciona la rama con el proyecto. Railway usa `Dockerfile` y `railway.toml`.
-3. En **Variables** del servicio backend, crea:
+## Backend Java en Render
+
+1. Crea un **Web Service** desde el repositorio público y selecciona `codex/streamguard`.
+2. Nombre: `streamguard-backend`. Lenguaje: **Docker**. Raíz: repositorio completo. Dockerfile: `./Dockerfile`. Región: **Virginia**.
+3. Selecciona explícitamente **Free, $0/month**; el formulario puede seleccionar inicialmente un plan de pago.
+4. Health Check Path: `/actuator/health`. Mantén una sola instancia.
+5. Configura las variables privadas siguientes. No subas contraseñas a Git ni al frontend.
 
 | Variable | Valor |
 |---|---|
-| `JDBC_DATABASE_URL` | `jdbc:postgresql://${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/${{Postgres.PGDATABASE}}` |
-| `PGUSER` | `${{Postgres.PGUSER}}` |
-| `PGPASSWORD` | `${{Postgres.PGPASSWORD}}` |
-| `FRONTEND_ORIGIN` | `https://TU-PROYECTO.vercel.app` (se ajusta al terminar Vercel) |
-| `GEMINI_API_KEY` | Tu clave de Google AI Studio |
-| `GEMINI_MODEL` | `gemini-2.5-flash`, o un modelo disponible compatible con salida estructurada |
-| `MEDIA_DIR` | `/data/media` |
+| `SPRING_PROFILES_ACTIVE` | `cloud` |
+| `JDBC_DATABASE_URL` | `jdbc:postgresql://aws-0-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require` |
+| `PGUSER` | `streamguard_backend.jegiuidrxxyijutqoowd` |
+| `PGPASSWORD` | Contraseña privada del rol |
+| `FRONTEND_ORIGIN` | `https://streamguard-delta.vercel.app` |
+| `MEDIA_STORAGE` | `database` |
+| `MEDIA_DIR` | `/tmp/streamguard/media` |
+| `MEDIA_WORK_DIR` | `/tmp/streamguard/work` |
+| `JAVA_TOOL_OPTIONS` | `-XX:MaxRAMPercentage=50 -XX:ActiveProcessorCount=1` |
 | `MAX_VIEWERS` | `6` |
+| `GEMINI_API_KEY` | Clave privada opcional hasta activar Gemini |
 
-4. Agrega un **volumen persistente al servicio backend**, montado en **`/data`**. El volumen de PostgreSQL no reemplaza este volumen: uno contiene tablas y el otro contiene archivos de video.
-5. Mantén **una réplica del backend**, porque las conexiones WebSocket y salas se administran en memoria.
-6. Despliega. Flyway creará las 64 tablas de dominio y su tabla técnica de migraciones.
-7. En la configuración de red del backend, genera un dominio público HTTPS. Guarda la dirección, por ejemplo `https://streamguard-backend.up.railway.app`.
-8. Abre `https://TU-BACKEND.up.railway.app/actuator/health`. Debe responder `UP`.
+6. Despliega. Docker instala FFmpeg y construye el JAR Java 21. Spring escucha en `PORT`, asignado por Render.
+7. Espera a que el servicio indique **Live** y `/actuator/health` responda `{"status":"UP"}`.
+8. Copia el origen HTTPS definitivo de Render para `PUBLIC_API_URL` en Vercel; sin `/api`, rutas ni barra final.
 
-No establezcas un comando de inicio adicional: el Dockerfile inicia el JAR y Spring toma el puerto de `PORT`. FFmpeg se instala durante la construcción. [Spring Boot en Railway](https://docs.railway.com/guides/spring-boot), [variables de referencia](https://docs.railway.com/variables), [volúmenes](https://docs.railway.com/volumes).
+`render.yaml` documenta la misma configuración para un Blueprint. Completa allí las variables con `sync: false`. El plan Free pierde los archivos locales al reiniciarse: `media_asset_contents` conserva los clips en PostgreSQL y FFmpeg usa archivos temporales. Cada clip admite hasta 30 MiB. Los clips comparten la cuota de la base; este almacenamiento está pensado para la demostración académica.
 
-## 4. Gemini
+Render Free puede dormir tras 15 minutos sin tráfico y tardar alrededor de un minuto en despertar. Tiene límites de horas, tráfico y compilación. No se activan planes ni discos de pago. [Límites oficiales](https://render.com/docs/free), [servicios web](https://render.com/docs/web-services).
 
-1. Entra a [Google AI Studio](https://aistudio.google.com) con tu cuenta y crea o selecciona una clave de API.
-2. Configúrala como `GEMINI_API_KEY` **en el backend Railway**.
-3. Vuelve a desplegar/reiniciar el backend para que lea las variables.
-4. En el estudio debe aparecer **Gemini está conectado**. Esto confirma que existe configuración; la comprobación de una llamada real se hace enviando un mensaje o generando un resumen.
-5. Si hay una cuota agotada, un modelo inválido o un error del proveedor, el chat se envía a revisión humana y el historial `ai_requests` registra `FAILED`. No se muestran claves ni errores internos al usuario.
+## Frontend TypeScript en Vercel
 
-La integración usa solicitudes REST desde Java y exige JSON estructurado, validado antes de aplicar decisiones. [Claves de Gemini](https://ai.google.dev/gemini-api/docs/api-key), [salidas estructuradas](https://ai.google.dev/gemini-api/docs/structured-output).
+1. Usa el proyecto `streamguard`, conectado al repositorio, rama de producción `codex/streamguard`.
+2. Framework: **Other**. Root Directory: **raíz del repositorio**. Node: **24.x**.
+3. Configura `PUBLIC_API_URL` con el origen HTTPS real de Render.
+4. `vercel.json` establece `npm ci`, `npm run build` y salida `frontend/dist`. El proceso valida traducciones y TypeScript estricto y compila la UI y el service worker.
+5. Publica y abre `https://streamguard-delta.vercel.app`. Asignar un dominio no confirma un despliegue exitoso: verifica los flujos al final.
 
-## 5. Frontend TypeScript en Vercel
+Vercel recibe solamente el origen público del backend. No añadas `PGPASSWORD` ni `GEMINI_API_KEY`. Si cambias `PUBLIC_API_URL`, vuelve a compilar. Si cambias el dominio frontend, ajusta `FRONTEND_ORIGIN` en Render al origen exacto; los orígenes adicionales se separan por comas. [Compilaciones Vercel](https://vercel.com/docs/builds/configure-a-build).
 
-1. Entra a [Vercel](https://vercel.com) y selecciona **Add New → Project**.
-2. Importa el repositorio de GitHub y selecciona la rama del proyecto como rama de producción.
-3. Framework: **Other**. Root Directory: **raíz del repositorio**. No selecciones `backend` ni `frontend` como raíz.
-4. Añade una variable de entorno pública:
+## Gemini y conexiones entre redes
 
-```text
-PUBLIC_API_URL=https://TU-BACKEND.up.railway.app
-```
+Obtén tu clave en [Google AI Studio](https://aistudio.google.com) y configura `GEMINI_API_KEY` exclusivamente en Render. Crear la clave corresponde al propietario. Usa un modelo disponible con JSON estructurado mediante `GEMINI_MODEL`. Comprueba sus cuotas gratuitas y no habilites facturación para conservar el presupuesto de cero.
 
-Usa el origen, sin `/api`, rutas, claves o parámetros. Debe usar HTTPS.
+Sin clave, el sistema indica **Reglas locales** y no simula una llamada de IA. Configurar una clave tampoco demuestra que una solicitud haya sido exitosa: envía un mensaje o genera un resumen y comprueba `ai_requests`. Los fallos del proveedor pasan a revisión humana. [Claves de Gemini](https://ai.google.dev/gemini-api/docs/api-key), [salida estructurada](https://ai.google.dev/gemini-api/docs/structured-output).
 
-5. `vercel.json` ya establece:
+WebRTC usa STUN, una conexión por espectador y un máximo de seis espectadores por directo. Algunas redes necesitan TURN: configura `TURN_URL`, `TURN_USERNAME` y `TURN_PASSWORD` si dispones de un servidor; no se ha contratado uno. Chat y señalización funcionan por WSS. Ante un corte breve el cliente reintenta y el backend espera 45 segundos antes de finalizar el directo.
 
-```text
-Install Command: npm ci
-Build Command: npm run build
-Output Directory: frontend/dist
-```
+## Firebase opcional
 
-6. Selecciona Node.js **24.x** en la configuración de compilación y despliega. npm instala las versiones fijadas en `package-lock.json`; el script verifica TypeScript estricto y compila con Vite. La salida es HTML, CSS y JavaScript generado desde TypeScript. Vercel no necesita Java ni Maven.
-7. Guarda el dominio definitivo de Vercel.
+Render reemplaza el alojamiento Java de Google para respetar la decisión de no activar facturación. Firebase Hosting puede publicar una copia adicional estática en Spark con la misma API de Render. No se utilizan Cloud Run ni App Hosting. La creación del proyecto Firebase depende de que el propietario acepte los términos de Google; iniciar sesión en la CLI no sustituye ese paso. [Planes de Firebase](https://firebase.google.com/pricing).
 
-Vercel sirve los archivos generados; la aplicación Java del servidor permanece en Railway. `PUBLIC_API_URL` se incorpora a la compilación: al cambiarla, vuelve a desplegar el frontend. [Configurar una compilación](https://vercel.com/docs/builds/configure-a-build), [Vite](https://vite.dev/guide/).
+## Comprobación final
 
-## 6. Conectar los dominios
+1. Backend `UP`, migraciones hasta V3 y PostgreSQL por SSL.
+2. Registro, sesión y creación de canal desde Vercel.
+3. Emisor y espectador recibiendo video y chat.
+4. Mensaje restringido en cola y decisión humana.
+5. Captura, recorte, publicación, descarga y enlace público de un clip.
+6. Reproducción después de reiniciar el backend y reconexión después de un corte.
+7. Navegación móvil sin desbordamiento.
+8. Llamada real a Gemini después de configurar la clave.
 
-1. Regresa al backend Railway y establece `FRONTEND_ORIGIN` con el origen exacto de Vercel, por ejemplo `https://proyecto-final-patrones-de-software.vercel.app`.
-2. Reinicia/despliega el backend.
-3. Si necesitas un dominio personalizado o una URL de vista previa adicional, agrega los orígenes explícitos separados por coma, sin espacios ni barra final.
-4. Prueba registro, creación de canal, mensajes y WebSocket desde Vercel.
-
-## 7. Video entre redes: TURN
-
-STUN se configura automáticamente. Si el video funciona en una red y falla entre redes distintas, usa un servidor TURN y establece en Railway:
-
-```text
-TURN_URL=turns:TU-SERVIDOR:5349
-TURN_USERNAME=TU-USUARIO
-TURN_PASSWORD=TU-CREDENCIAL
-```
-
-Las credenciales de conexión TURN se entregan al navegador, como requiere WebRTC; usa credenciales acotadas/temporales en un despliegue público. La señalización usa HTTPS/WSS; Vercel no aloja el servidor de WebSocket.
-
-## 8. Comprobación final
-
-- Salud del backend `UP`, migraciones completas y volumen montado.
-- Registro e inicio de sesión desde Vercel.
-- Un creador emitiendo y otro usuario viendo desde una ventana o dispositivo distinto.
-- Chat visible en tiempo real y palabra restringida enviada a la cola de moderación.
-- Decisión humana y silencio temporal efectivos.
-- Marcador que produzca un archivo reproducible, edición y publicación.
-- Resumen de Gemini con una llamada exitosa registrada.
-- Vista móvil y posibilidad de agregar la PWA a inicio.
-
-## Resolución de fallos habituales
-
-| Síntoma | Qué revisar |
-|---|---|
-| El frontend no conecta | `PUBLIC_API_URL`, dominio HTTPS del backend y `FRONTEND_ORIGIN`. |
-| Error de base de datos al iniciar | Nombre real del servicio Postgres, referencias `PGHOST/PGPORT/PGDATABASE`, usuario y contraseña. |
-| Directo sin video | Emisor conectado, permisos de cámara, HTTPS, límite de espectadores y TURN. |
-| Clips fallan o desaparecen tras reiniciar | FFmpeg instalado (Dockerfile), volumen backend en `/data` y `MEDIA_DIR=/data/media`. |
-| IA muestra reglas locales | `GEMINI_API_KEY` ausente en backend o servicio aún sin reiniciar. |
-| IA envía todos los mensajes a revisión | Cuota, modelo, conectividad o respuesta inválida. Revisa `ai_requests.status`. |
-| La compilación del frontend falla | Node 24.x, `npm ci`, dependencias de `package-lock.json` y el resultado de `npm run typecheck`. |
-
-Railway, almacenamiento y Gemini pueden requerir un plan o consumo facturado según la cuenta. Esta entrega no configura facturación ni publica automáticamente en tus cuentas.
+Si Render está despertando, espera a que salud responda y recarga. Ante errores revisa HTTPS, CORS y credenciales del rol. Para clips revisa FFmpeg, `MEDIA_STORAGE=database` y espacio en Supabase. No muestres secretos en capturas ni registros de soporte.

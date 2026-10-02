@@ -1,6 +1,6 @@
 {
-  "tables": 64,
-  "foreignKeys": 101,
+  "tables": 65,
+  "foreignKeys": 102,
   "catalog": [
     {
       "name": "users",
@@ -179,7 +179,7 @@
     },
     {
       "name": "media_assets",
-      "purpose": "Metadatos de archivos reales en el volumen persistente",
+      "purpose": "Metadatos de archivos reales asociados al propietario",
       "scope": "operational"
     },
     {
@@ -321,6 +321,11 @@
       "name": "playlist_items",
       "purpose": "Extensión para clips ordenados dentro de listas",
       "scope": "extension"
+    },
+    {
+      "name": "media_asset_contents",
+      "purpose": "Contenido binario de clips persistido en PostgreSQL para hosts sin disco permanente",
+      "scope": "operational"
     }
   ]
 }

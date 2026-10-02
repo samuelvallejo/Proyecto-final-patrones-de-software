@@ -5,11 +5,11 @@
 ```mermaid
 flowchart LR
     U[Computador o celular] --> F[Frontend TypeScript / Vite / PWA\nVercel]
-    F -->|HTTPS JSON| B[Backend Java 21 Spring Boot\nRailway]
+    F -->|HTTPS JSON| B[Backend Java 21 Spring Boot\nRender Free]
     F <-->|WSS: chat, señalización y eventos| B
-    B -->|JDBC y Flyway| D[(PostgreSQL\n64 tablas)]
+    B -->|JDBC y Flyway| D[(PostgreSQL\n65 tablas)]
     B -->|HTTPS y clave privada| G[API Gemini]
-    B --> M[FFmpeg y volumen /data\nArchivos de clips]
+    B --> M[FFmpeg y archivos temporales]
     F <-->|WebRTC audio y video| V[Otro navegador]
 ```
 
@@ -17,7 +17,7 @@ La UI y sus eventos están escritos en `frontend/src/app.ts`. `api.ts` administr
 
 El frontend usa TypeScript estricto, módulos de navegador y DOM nativo. `npm run build` verifica los tipos de la UI y del worker, valida los catálogos y compila con Vite. Maven construye únicamente el backend. La migración del cliente conserva los endpoints, tokens, permisos y las migraciones PostgreSQL existentes.
 
-El backend administra autenticación, autorización por canal, persistencia, moderación y flujos de IA. El frontend no consulta PostgreSQL ni llama a Gemini. Los archivos multimedia se guardan en un volumen y sus metadatos se relacionan en PostgreSQL.
+El backend administra autenticación, autorización por canal, persistencia, moderación y flujos de IA. El frontend no consulta PostgreSQL ni llama a Gemini. En cloud, PostgreSQL conserva los bytes y los metadatos de los clips. El disco temporal del backend se reconstruye al reproducirlos.
 
 ## Mensaje de chat
 
@@ -49,7 +49,7 @@ La llamada de IA no mantiene bloqueada la fila del usuario: la aceptación del m
 
 ## Video y clips
 
-El creador prepara cámara/pantalla antes de crear el directo. Solo el propietario puede unirse como emisor. Cada espectador establece una conexión WebRTC con él usando ofertas, respuestas y candidatos ICE por el backend. El backend publica presencia real. Cuando el emisor se desconecta, el directo termina; una transmisión que nunca conecta un emisor también caduca.
+El creador prepara cámara/pantalla antes de crear el directo. Solo el propietario puede unirse como emisor. Cada espectador establece una conexión WebRTC con él usando ofertas, respuestas y candidatos ICE por el backend. El backend publica presencia real. Tras una desconexión, el emisor tiene 45 segundos para reconectar. El cliente reintenta y conserva la cámara y la grabación. Sin reconexión, el directo termina; una transmisión que nunca conecta un emisor también caduca.
 
 MediaRecorder crea segmentos independientes de aproximadamente 15 segundos y conserva un búfer breve en el navegador. Un marcador manual, un aumento de al menos 8 mensajes en 10 segundos o un aumento del nivel de audio solicita una captura al emisor. El backend valida el archivo, repara su metadata si es necesario, guarda el segmento y crea un clip pendiente. FFmpeg procesa recortes y convierte entradas MP4 a WebM.
 
@@ -71,4 +71,4 @@ Los permisos se comprueban en el backend por canal. Los roles globales no dan ac
 
 ## Evolución hacia mayor audiencia
 
-Esta versión utiliza una sola réplica, un volumen local persistente y WebRTC directo. Para aumentar la audiencia se sustituye la distribución de medios por SFU/servicio de video y CDN, se usa almacenamiento de objetos para clips y un bus compartido para eventos. La moderación podría pasar a una cola de tareas con prioridades y lotes; la clasificación y el contrato de políticas ya están separados de la infraestructura.
+Esta versión utiliza una sola réplica, clips persistidos en PostgreSQL y WebRTC directo. Para aumentar la audiencia se sustituye la distribución de medios por SFU/servicio de video y CDN, se usa almacenamiento de objetos para clips y un bus compartido para eventos. La moderación podría pasar a una cola de tareas con prioridades y lotes; la clasificación y el contrato de políticas ya están separados de la infraestructura.

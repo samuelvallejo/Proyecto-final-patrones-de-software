@@ -1,12 +1,12 @@
 # Base de datos PostgreSQL
 
-El esquema contiene **64 tablas de dominio**. Flyway agrega `flyway_schema_history`, que no se cuenta para el requisito académico. El catálogo y las relaciones se generan desde la migración real con `scripts/document-schema.py`.
+El esquema contiene **65 tablas de dominio**. Flyway agrega `flyway_schema_history`, que no se cuenta para el requisito académico. El catálogo y las relaciones se generan desde la migración real con `scripts/document-schema.py`.
 
 ## Integridad y diseño
 
 El modelo usa UUID, claves primarias, relaciones mediante claves foráneas, restricciones únicas, estados acotados mediante CHECK, tiempos TIMESTAMPTZ y entradas/respuestas de IA en JSONB. Un índice parcial impide dos directos activos del mismo canal. Otro evita duplicar clips para un marcador. Las listas relacionadas usan claves compuestas. Hay índices de búsqueda para salas, cola, sanciones, clips e historial, y un índice GIN para payloads de eventos.
 
-Los permisos se comprueban por canal en servicios del backend. Los hashes de contraseñas y sesiones permanecen en PostgreSQL. Los videos se guardan en un volumen, relacionados mediante `media_assets`; no se almacenan como grandes binarios dentro de las tablas.
+Los permisos se comprueban por canal en servicios del backend. Los hashes de contraseñas y sesiones permanecen en PostgreSQL. En el perfil cloud, los clips se conservan como BYTEA en media_asset_contents, relacionados con media_assets. Los archivos temporales se reconstruyen al reproducir o recortar el video. Cada clip tiene un límite de 30 MiB; el espacio de la base se comparte con el resto del sistema. El modo filesystem sigue disponible para servidores con volumen persistente.
 
 ## Catálogo y alcance
 
@@ -49,7 +49,7 @@ Los permisos se comprueban por canal en servicios del backend. Los hashes de con
 | 33 | `user_sanctions` | Silencios/bloqueos por canal con expiración y revocación | Operativa |
 | 34 | `sanction_appeals` | Extensión para apelaciones de sanciones | Extensión |
 | 35 | `user_warnings` | Advertencias resultantes de moderación automática | Operativa |
-| 36 | `media_assets` | Metadatos de archivos reales en el volumen persistente | Operativa |
+| 36 | `media_assets` | Metadatos de archivos reales asociados al propietario | Operativa |
 | 37 | `recording_segments` | Intervalos de grabación asociados a archivos | Operativa |
 | 38 | `stream_highlights` | Marcadores manuales, aumentos del chat y audio | Operativa |
 | 39 | `clips` | Clip, video, intervalo, metadatos y estado de publicación | Operativa |
@@ -78,16 +78,17 @@ Los permisos se comprueban por canal en servicios del backend. Los hashes de con
 | 62 | `channel_emotes` | Extensión para emotes disponibles por canal | Extensión |
 | 63 | `playlists` | Extensión para listas públicas o privadas del canal | Extensión |
 | 64 | `playlist_items` | Extensión para clips ordenados dentro de listas | Extensión |
+| 65 | `media_asset_contents` | Contenido binario de clips persistido en PostgreSQL para hosts sin disco permanente | Operativa |
 
 ## Verificar el requisito
 
 ```sql
-SELECT count(*) AS tablas_de_dominio
+SELECT count(*) AS domain_tables
 FROM information_schema.tables
-WHERE table_schema = 'public'
+WHERE table_schema = 'streamguard' -- usar public en desarrollo local
   AND table_type = 'BASE TABLE'
   AND table_name <> 'flyway_schema_history';
--- Resultado esperado: 64
+-- Resultado esperado: 65
 ```
 
 ## Recorrido principal
@@ -96,7 +97,7 @@ WHERE table_schema = 'public'
 
 ## Diagrama completo de relaciones
 
-El diagrama siguiente incluye las 64 tablas y las relaciones declaradas. Los detalles de columnas, nulabilidad, claves compuestas y restricciones están en las migraciones SQL. La cardinalidad uno-a-muchos se usa como vista general de claves foráneas; las restricciones UNIQUE/PK del SQL precisan las relaciones uno-a-uno.
+El diagrama siguiente incluye las 65 tablas y las relaciones declaradas. Los detalles de columnas, nulabilidad, claves compuestas y restricciones están en las migraciones SQL. La cardinalidad uno-a-muchos se usa como vista general de claves foráneas; las restricciones UNIQUE/PK del SQL precisan las relaciones uno-a-uno.
 
 ```mermaid
 erDiagram
@@ -292,6 +293,9 @@ erDiagram
     playlist_items {
         UUID playlist_id
     }
+    media_asset_contents {
+        UUID asset_id
+    }
     ai_providers ||--o{ ai_models : references
     ai_requests ||--o{ ai_responses : references
     ai_requests ||--o{ chat_faqs : references
@@ -332,6 +336,7 @@ erDiagram
     media_assets ||--o{ clip_versions : references
     media_assets ||--o{ clips : references
     media_assets ||--o{ emotes : references
+    media_assets ||--o{ media_asset_contents : references
     media_assets ||--o{ recording_segments : references
     media_assets ||--o{ transcripts : references
     moderation_actions ||--o{ user_sanctions : references
@@ -396,5 +401,6 @@ erDiagram
 
 - `V1__platform.sql`: esquema, índices y catálogos iniciales.
 - `V2__clip_uniqueness.sql`: unicidad de clip por marcador e índice de segmentos.
+- `V3__durable_media.sql`: bytes de clips, límite por archivo y política de acceso para el backend.
 
-No edites una migración ya aplicada en producción. Agrega una nueva versión para cambiar el esquema. En Railway, el backend ejecuta las migraciones al arrancar sobre la base privada.
+No edites una migración ya aplicada en producción. Agrega una nueva versión para cambiar el esquema. En Supabase, el esquema privado streamguard fue inicializado con V1/V2; el perfil cloud reconoce ese punto de partida y Flyway aplica V3 y versiones posteriores. El rol streamguard_backend conecta mediante el pooler de sesiones y SSL. El frontend no recibe credenciales de PostgreSQL.

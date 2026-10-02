@@ -27,12 +27,14 @@ interface MediaState {
   callback: (event: LiveEvent) => void; stopping: boolean; capture: string | null;
   audio: AudioContext | null; audioTimer?: number; speech: SpeechRecognizer | null;
   urls: string[]; lastPeak: number;
+  reconnectTimer?: number; keepAliveTimer?: number; reconnectAttempts: number;
 }
 const state: MediaState = {
   api: '', token: '', config: {}, local: null, remote: null, ws: null,
   peers: new Map(), pending: new Map(), host: false, stream: '', started: 0,
   recorderStarted: 0, segments: [], recorder: null, callback: () => {},
   stopping: false, capture: null, audio: null, speech: null, urls: [], lastPeak: 0,
+  reconnectAttempts: 0,
 };
 export function messageForError(error: unknown): string {
   const keys: Record<string, TranslationKey> = {
@@ -106,6 +108,7 @@ async function signal(event: LiveEvent): Promise<void> {
   }
 }
 function connect(stream: string, host: boolean, callback: (event: LiveEvent) => void): void {
+  window.clearTimeout(state.reconnectTimer); window.clearInterval(state.keepAliveTimer);
   if (state.ws) {state.ws.onclose = null; state.ws.close();} closePeers();
   state.stream = stream; state.host = host; state.callback = callback; state.stopping = false;
   if (host && !state.local) {emit({type: 'error', message: t('mediaText05')}); return;}
@@ -114,8 +117,15 @@ function connect(stream: string, host: boolean, callback: (event: LiveEvent) => 
   ws.onmessage = async raw => {
     try {
       const event = liveEvent(JSON.parse(String(raw.data)) as unknown);
-      if (event.type === 'joined') {joined = true; if (host) {state.started = Date.now(); startRecording(); startAudio();}}
-      if (event.type === 'error' && !joined) ws.close();
+      if (state.ws !== ws || state.stopping) return;
+      if (event.type === 'joined') {
+        joined = true; state.reconnectAttempts = 0;
+        state.keepAliveTimer = window.setInterval(() => send({type: 'ping'}), 20000);
+        if (host && !state.recorder) {state.started = Date.now(); startRecording(); startAudio();}
+        attach();
+      }
+      if (event.type === 'error' && !joined) {ws.onclose = null; stop();}
+      if (event.type === 'presence' && !host && event.hostOnline === false) closePeers();
       if (event.type === 'viewer-joined' && host && event.peerId) {
         const peer = createPeer(event.peerId); await peer.setLocalDescription(await peer.createOffer());
         send({type: 'signal', to: event.peerId, payload: {description: peer.localDescription}});
@@ -132,8 +142,12 @@ function connect(stream: string, host: boolean, callback: (event: LiveEvent) => 
   };
   ws.onerror = () => emit({type: 'error', message: t('mediaText06')});
   ws.onclose = () => {
-    if (state.stopping) return; const wasHost = state.host; stop();
-    emit({type: 'ended', message: wasHost ? t('mediaText07') : t('mediaText08')});
+    if (state.stopping || state.ws !== ws) return;
+    window.clearInterval(state.keepAliveTimer); closePeers();
+    const attempt = ++state.reconnectAttempts;
+    if (attempt > 8) {const wasHost = state.host; stop(); emit({type: 'ended', message: wasHost ? t('mediaText07') : t('mediaText08')}); return;}
+    if (attempt === 1) emit({type: 'notice', body: t('mediaReconnecting')});
+    state.reconnectTimer = window.setTimeout(() => connect(stream, host, callback), Math.min(500 * 2 ** (attempt - 1), 5000));
   };
 }
 function startRecording(): void {
@@ -223,6 +237,7 @@ async function share(asset: string, title: string): Promise<boolean> {
   }
 }
 function stop(): void {
+  window.clearTimeout(state.reconnectTimer); window.clearInterval(state.keepAliveTimer); state.reconnectAttempts = 0;
   state.stopping = true; state.capture = null; window.clearTimeout(state.interval); window.clearInterval(state.audioTimer);
   if (state.recorder?.state === 'recording') state.recorder.stop(); state.recorder = null;
   const ws = state.ws; state.ws = null; if (ws) {ws.onclose = null; ws.close();} closePeers();

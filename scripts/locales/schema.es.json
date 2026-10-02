@@ -31,7 +31,8 @@
   "schemaText30": "Silencios/bloqueos por canal con expiración y revocación",
   "schemaText31": "Extensión para apelaciones de sanciones",
   "schemaText32": "Advertencias resultantes de moderación automática",
-  "schemaText33": "Metadatos de archivos reales en el volumen persistente",
+  "schemaText33": "Metadatos de archivos reales asociados al propietario",
+  "durableMediaContent": "Contenido binario de clips persistido en PostgreSQL para hosts sin disco permanente",
   "schemaText34": "Intervalos de grabación asociados a archivos",
   "schemaText35": "Marcadores manuales, aumentos del chat y audio",
   "schemaText36": "Clip, video, intervalo, metadatos y estado de publicación",
@@ -60,7 +61,7 @@
   "schemaText59": "# Base de datos PostgreSQL",
   "schemaText60": "## Integridad y diseño",
   "schemaText61": "El modelo usa UUID, claves primarias, relaciones mediante claves foráneas, restricciones únicas, estados acotados mediante CHECK, tiempos TIMESTAMPTZ y entradas/respuestas de IA en JSONB. Un índice parcial impide dos directos activos del mismo canal. Otro evita duplicar clips para un marcador. Las listas relacionadas usan claves compuestas. Hay índices de búsqueda para salas, cola, sanciones, clips e historial, y un índice GIN para payloads de eventos.",
-  "schemaText62": "Los permisos se comprueban por canal en servicios del backend. Los hashes de contraseñas y sesiones permanecen en PostgreSQL. Los videos se guardan en un volumen, relacionados mediante `media_assets`; no se almacenan como grandes binarios dentro de las tablas.",
+  "schemaText62": "Los permisos se comprueban por canal en servicios del backend. Los hashes de contraseñas y sesiones permanecen en PostgreSQL. En el perfil cloud, los clips se conservan como BYTEA en media_asset_contents, relacionados con media_assets. Los archivos temporales se reconstruyen al reproducir o recortar el video. Cada clip tiene un límite de 30 MiB; el espacio de la base se comparte con el resto del sistema. El modo filesystem sigue disponible para servidores con volumen persistente.",
   "schemaText63": "## Catálogo y alcance",
   "schemaText64": "**Operativa:** usada por un flujo implementado. **Catálogo:** precargada para clasificar/configurar el dominio. **Extensión:** modelo persistente preparado, sin una función completa de usuario en esta versión. Las tablas de exportación y compartidos son extensiones de seguimiento: la descarga y el enlace de compartir sí funcionan a través del archivo y el clip, sin escribir en esas tablas.",
   "schemaText65": "Extensión",
@@ -68,9 +69,9 @@
   "schemaText67": "## Verificar el requisito",
   "schemaText68": "`users` posee `channels`; un canal define política y moderadores y tiene `streams`. Cada directo tiene `chat_rooms` y `chat_messages`. Un mensaje puede tener clasificación, solicitud/respuesta de IA, caso de cola y acciones. Las acciones generan advertencias o sanciones. Los momentos del directo relacionan grabaciones, archivos y clips, y los clips conservan versiones y decisiones de revisión. Los resúmenes y subtítulos aportan contexto editorial y las muestras de audiencia alimentan el panel.",
   "schemaText69": "## Diagrama completo de relaciones",
-  "schemaText70": "El diagrama siguiente incluye las 64 tablas y las relaciones declaradas. Los detalles de columnas, nulabilidad, claves compuestas y restricciones están en las migraciones SQL. La cardinalidad uno-a-muchos se usa como vista general de claves foráneas; las restricciones UNIQUE/PK del SQL precisan las relaciones uno-a-uno.",
-  "schemaText71": "- `V1__platform.sql`: esquema, índices y catálogos iniciales.\n- `V2__clip_uniqueness.sql`: unicidad de clip por marcador e índice de segmentos.",
-  "schemaText72": "No edites una migración ya aplicada en producción. Agrega una nueva versión para cambiar el esquema. En Railway, el backend ejecuta las migraciones al arrancar sobre la base privada.",
+  "schemaText70": "El diagrama siguiente incluye las 65 tablas y las relaciones declaradas. Los detalles de columnas, nulabilidad, claves compuestas y restricciones están en las migraciones SQL. La cardinalidad uno-a-muchos se usa como vista general de claves foráneas; las restricciones UNIQUE/PK del SQL precisan las relaciones uno-a-uno.",
+  "schemaText71": "- `V1__platform.sql`: esquema, índices y catálogos iniciales.\n- `V2__clip_uniqueness.sql`: unicidad de clip por marcador e índice de segmentos.\n- `V3__durable_media.sql`: bytes de clips, límite por archivo y política de acceso para el backend.",
+  "schemaText72": "No edites una migración ya aplicada en producción. Agrega una nueva versión para cambiar el esquema. En Supabase, el esquema privado streamguard fue inicializado con V1/V2; el perfil cloud reconoce ese punto de partida y Flyway aplica V3 y versiones posteriores. El rol streamguard_backend conecta mediante el pooler de sesiones y SSL. El frontend no recibe credenciales de PostgreSQL.",
   "schemaIntroduction": "El esquema contiene **{count} tablas de dominio**. Flyway agrega `flyway_schema_history`, que no se cuenta para el requisito académico. El catálogo y las relaciones se generan desde la migración real con `scripts/document-schema.py`.",
   "schemaLabelText01": "Reacciones a mensajes individuales",
   "schemaLabelText02": "Temas enviados como contexto a Gemini",
@@ -82,5 +83,5 @@
   "schemaLabelText08": "Operativa",
   "schemaLabelText09": "## Recorrido principal",
   "schemaLabelText10": "## Migraciones",
-  "schemaLabelText11": "```sql\nSELECT count(*) AS tablas_de_dominio\nFROM information_schema.tables\nWHERE table_schema = 'public'\n  AND table_type = 'BASE TABLE'\n  AND table_name <> 'flyway_schema_history';\n-- Resultado esperado: 64\n```"
+  "schemaLabelText11": "```sql\nSELECT count(*) AS domain_tables\nFROM information_schema.tables\nWHERE table_schema = 'streamguard' -- usar public en desarrollo local\n  AND table_type = 'BASE TABLE'\n  AND table_name <> 'flyway_schema_history';\n-- Resultado esperado: 65\n```"
 }

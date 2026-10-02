@@ -6,3 +6,5 @@ spring:
 app:
   gemini-key: ''
   media-dir: ${TEST_MEDIA_DIR:./target/test-media}
+  media-work-dir: ${TEST_MEDIA_WORK_DIR:./target/test-media-work}
+  media-storage: ${TEST_MEDIA_STORAGE:database}

@@ -8,25 +8,34 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class MediaService {
   private final Path root;
+  private final Path workRoot;
   private final String ffmpeg, ffprobe;
   private final Db db;
+  private final boolean databaseStorage;
 
   public MediaService(
       Db db,
       @Value("${app.media-dir}") String directory,
+      @Value("${app.media-work-dir:}") String workDirectory,
+      @Value("${app.media-storage:filesystem}") String storage,
       @Value("${FFMPEG_BIN:ffmpeg}") String ffmpeg,
       @Value("${FFPROBE_BIN:ffprobe}") String ffprobe)
       throws IOException {
     this.db = db;
+    if (!Set.of("filesystem", "database").contains(storage)) throw new IllegalArgumentException("Invalid media storage mode");
+    this.databaseStorage = storage.equals("database");
     this.root = Path.of(directory).toAbsolutePath().normalize();
+    this.workRoot = workDirectory.isBlank() ? root : Path.of(workDirectory).toAbsolutePath().normalize();
     this.ffmpeg = ffmpeg;
     this.ffprobe = ffprobe;
     Files.createDirectories(root);
+    Files.createDirectories(workRoot);
   }
 
   public Path path(String key) {
@@ -39,11 +48,30 @@ public class MediaService {
 
   public record Saved(UUID asset, String key, double duration) {}
 
+  private Path workingPath(String key) {
+    path(key);
+    return workRoot.resolve(key);
+  }
+
+  private void persist(Path workingFile, String key, UUID asset) throws IOException {
+    if (databaseStorage) {
+      db.exec("INSERT INTO media_asset_contents(asset_id,content) VALUES (?,?)", asset, Files.readAllBytes(workingFile));
+      return;
+    }
+    Path stored = path(key);
+    if (!workingFile.equals(stored)) Files.copy(workingFile, stored);
+  }
+
+  private void release(Path workingFile) {
+    if (databaseStorage || !workRoot.equals(root)) delete(workingFile);
+  }
+
+  @Transactional
   public Saved save(UUID owner, MultipartFile file) {
     if (file.isEmpty() || file.getSize() > 30 * 1024 * 1024)
       throw new ApiError(400, Messages.text("mediaServiceSaveText03"));
     String key = UUID.randomUUID() + ".webm";
-    Path destination = path(key);
+    Path destination = workingPath(key);
     try {
       boolean mp4;
       try (InputStream input = file.getInputStream()) {
@@ -61,7 +89,7 @@ public class MediaService {
         if (!webm && !mp4) throw new ApiError(400, Messages.text("mediaServiceSaveText04"));
       }
       if (mp4) {
-        Path original = root.resolve(UUID.randomUUID() + ".mp4");
+        Path original = workRoot.resolve(UUID.randomUUID() + ".mp4");
         try {
           file.transferTo(original);
           run(
@@ -97,13 +125,19 @@ public class MediaService {
               key,
               Files.size(destination),
               duration);
+      // Persist completed bytes transactionally, independently of the host's ephemeral filesystem.
+      persist(destination, key, asset);
       return new Saved(asset, key, duration);
     } catch (ApiError e) {
       delete(destination);
+      delete(path(key));
       throw e;
     } catch (Exception e) {
       delete(destination);
+      delete(path(key));
       throw new ApiError(503, Messages.text("mediaServiceSaveText06"));
+    } finally {
+      release(destination);
     }
   }
 
@@ -122,7 +156,7 @@ public class MediaService {
             15);
     // MediaRecorder may omit duration; ffmpeg remux repairs timestamps/metadata.
     if (output.strip().equals("N/A") || output.isBlank()) {
-      Path fixed = path(UUID.randomUUID() + ".webm");
+      Path fixed = workingPath(UUID.randomUUID() + ".webm");
       try {
         run(
             List.of(
@@ -150,8 +184,10 @@ public class MediaService {
     return d;
   }
 
+  @Transactional
   public Saved trim(UUID owner, String sourceKey, double start, double end) {
-    Path dest = path(UUID.randomUUID() + ".webm");
+    String key = UUID.randomUUID() + ".webm";
+    Path dest = workingPath(key);
     try {
       run(
           List.of(
@@ -162,7 +198,7 @@ public class MediaService {
               "-ss",
               Double.toString(start),
               "-i",
-              path(sourceKey).toString(),
+              materialize(sourceKey).toString(),
               "-t",
               Double.toString(end - start),
               "-c:v",
@@ -184,10 +220,14 @@ public class MediaService {
               dest.getFileName().toString(),
               Files.size(dest),
               d);
+      persist(dest, key, id);
       return new Saved(id, dest.getFileName().toString(), d);
     } catch (Exception e) {
       delete(dest);
+      delete(path(key));
       throw new ApiError(503, Messages.text("mediaServiceTrimText07"));
+    } finally {
+      release(dest);
     }
   }
 
@@ -219,6 +259,22 @@ public class MediaService {
     }
   }
 
+  private synchronized Path materialize(String key) throws IOException {
+    Path stored = path(key);
+    if (!databaseStorage || Files.exists(stored)) return stored;
+    byte[] content = db.jdbc.queryForObject(
+        "SELECT b.content FROM media_asset_contents b JOIN media_assets a ON a.id=b.asset_id WHERE a.storage_key=?",
+        byte[].class, key);
+    if (content == null) throw new IOException("Stored media has no content");
+    // Stage in the same directory so readers never observe a partially downloaded file.
+    Path staged = Files.createTempFile(root, "download-", ".webm");
+    try {
+      Files.write(staged, content);
+      Files.move(staged, stored, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+    } finally { delete(staged); }
+    return stored;
+  }
+
   public Path authorized(UUID asset, UUID user) {
     var row =
         db.one(
@@ -227,7 +283,9 @@ public class MediaService {
             asset);
     if (!Objects.equals(row.get("owner_id"), user) && !(boolean) row.get("published"))
       throw new ApiError(403, Messages.text("mediaServiceAuthorizedText08"));
-    Path p = path(row.get("storage_key").toString());
+    Path p;
+    try { p = materialize(row.get("storage_key").toString()); }
+    catch (IOException e) { throw new ApiError(503, Messages.text("mediaServiceLoadFailed")); }
     if (!Files.exists(p)) throw new ApiError(404, Messages.text("mediaServiceAuthorizedText09"));
     return p;
   }

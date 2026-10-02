@@ -88,5 +88,7 @@
   "fieldStreamId": "Directo",
   "fieldUserId": "Usuario",
   "fieldCategoryId": "Categoría",
-  "fieldGeneric": "Campo"
+  "fieldGeneric": "Campo",
+  "liveHubUnknownEvent": "Evento desconocido",
+  "mediaServiceLoadFailed": "No se pudo recuperar el video almacenado. Vuelve a intentar."
 }

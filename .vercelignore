@@ -1,0 +1,8 @@
+.tools
+.local
+backend/target
+artifacts
+deploy
+docs
+.env*
+frontend/dist

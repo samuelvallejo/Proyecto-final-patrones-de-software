@@ -29,6 +29,8 @@ management:
 app:
   origins: ${FRONTEND_ORIGIN:http://localhost:5173}
   media-dir: ${MEDIA_DIR:./.local/media}
+  media-work-dir: ${MEDIA_WORK_DIR:}
+  media-storage: ${MEDIA_STORAGE:filesystem}
   gemini-key: ${GEMINI_API_KEY:}
   gemini-model: ${GEMINI_MODEL:gemini-2.5-flash}
   max-viewers: ${MAX_VIEWERS:6}

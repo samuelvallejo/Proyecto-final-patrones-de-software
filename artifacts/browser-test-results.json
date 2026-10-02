@@ -5,6 +5,7 @@
     "Registration, login and channel creation through TypeScript forms",
     "Synthetic camera and broadcaster signaling connect",
     "A second browser receives real WebRTC video",
+    "Signaling reconnects after a network interruption without ending the stream",
     "Chat message is moderated, persisted and broadcast",
     "Restricted message stays private until human approval",
     "MediaRecorder captures an actual playable clip and creator publishes it",

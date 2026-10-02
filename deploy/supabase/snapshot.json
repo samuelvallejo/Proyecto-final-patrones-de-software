@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "schema": "streamguard",
+  "domainTables": 64,
+  "migrations": [
+    {
+      "name": "V1__platform.sql",
+      "sha256": "155c2f8ce929a8c1991bdb30b9919b12c6ee30d4d97214eac8e7e42a06ea0969"
+    },
+    {
+      "name": "V2__clip_uniqueness.sql",
+      "sha256": "78d3f202317dfa83c680c0179fc63ef3e02af9a1c2d088c26a13b43af764e8c3"
+    }
+  ]
+}

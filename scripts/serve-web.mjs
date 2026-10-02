@@ -6,4 +6,5 @@ const server=http.createServer((req,res)=>{
  if(filename==='/')filename='/index.html';const target=path.resolve(root,'.'+filename);
  if(!target.startsWith(root+path.sep)||!fs.existsSync(target)||fs.statSync(target).isDirectory()){res.writeHead(404);res.end('Not found');return;}
  res.writeHead(200,{'Content-Type':types[path.extname(target)]||'application/octet-stream','Cache-Control':'no-cache'});fs.createReadStream(target).pipe(res);
-});server.listen(5173,'0.0.0.0',()=>console.log('StreamGuard frontend: http://localhost:5173'));
+});const port=Number(process.env.WEB_PORT||5173);
+server.listen(port,'0.0.0.0',()=>console.log(`StreamGuard frontend: http://localhost:${port}`));
