@@ -200,8 +200,14 @@ export class StreamGuardApp {
     left.append(html(t('uiStudioText78') + (this.broadcasting ? t('uiStudioText79') : t('uiStudioText80')) + "</span></div><div class='video-stage'><video id='live-video' autoplay playsinline muted></video><div class='video-placeholder' id='video-placeholder'>" + icon('video') + t('uiStudioText81')));
     if (this.broadcasting) {
       const actions = panel('action-row');
+      const microphone = button(media.microphoneEnabled() ? t('uiStudioText104') : t('uiStudioText105'), 'button subtle', () => {
+        const enabled = media.toggleMicrophone();
+        microphone.textContent = enabled ? t('uiStudioText104') : t('uiStudioText105');
+        microphone.setAttribute('aria-pressed', String(enabled));
+      });
+      microphone.setAttribute('aria-pressed', String(media.microphoneEnabled()));
       actions.append(button(t('uiStudioText82'), 'button primary', async () => {await this.api.request('POST', `/streams/${this.stream}/highlights`, {source: 'MANUAL', reason: t('uiStudioText83')}); toast(t('uiStudioText84'));}),
-        button(t('uiStudioText85'), 'button subtle', async () => {await media.captions(); toast(t('uiStudioText86'));}), button(t('uiStudioText87'), 'button danger', () => this.finish()));
+        microphone, button(t('uiStudioText85'), 'button subtle', async () => {await media.captions(); toast(t('uiStudioText86'));}), button(t('uiStudioText87'), 'button danger', () => this.finish()));
       left.append(actions);
     } else if (text(latest, 'status') === 'LIVE') {
       left.append(html(t('uiStudioText88')), button(t('uiStudioText89'), 'button danger', async () => {await this.api.request('POST', `/streams/${text(latest, 'id')}/end`, {}); await this.loadDashboard(true);}));

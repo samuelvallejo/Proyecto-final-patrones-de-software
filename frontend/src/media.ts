@@ -21,6 +21,7 @@ declare global {
 interface MediaState {
   api: string; token: string; config: MediaConfig;
   local: MediaStream | null; remote: MediaStream | null; ws: WebSocket | null;
+  microphone: MediaStreamTrack | null;
   peers: Map<string, RTCPeerConnection>; pending: Map<string, RTCIceCandidateInit[]>;
   host: boolean; stream: string; started: number; recorderStarted: number;
   segments: Segment[]; recorder: MediaRecorder | null; interval?: number;
@@ -31,6 +32,7 @@ interface MediaState {
 }
 const state: MediaState = {
   api: '', token: '', config: {}, local: null, remote: null, ws: null,
+  microphone: null,
   peers: new Map(), pending: new Map(), host: false, stream: '', started: 0,
   recorderStarted: 0, segments: [], recorder: null, callback: () => {},
   stopping: false, capture: null, audio: null, speech: null, urls: [], lastPeak: 0,
@@ -74,11 +76,31 @@ async function prepare(screen: boolean): Promise<void> {
   if (!navigator.mediaDevices) throw new Error(t('mediaText02'));
   if (!recorderType()) throw new Error(t('mediaText03'));
   stop(); state.stopping = false;
+  let microphoneStream: MediaStream | null = null;
+  let displayStream: MediaStream | null = null;
   try {
-    state.local = screen
-      ? await navigator.mediaDevices.getDisplayMedia({video: {frameRate: 24}, audio: true})
-      : await navigator.mediaDevices.getUserMedia({video: {width: {ideal: 1280}, height: {ideal: 720}, frameRate: {ideal: 24}}, audio: true});
-  } catch (error) { throw new Error(messageForError(error)); }
+    if (screen) {
+      // Screen capture audio is optional and represents system audio. Request
+      // the microphone separately so the creator's voice is always included.
+      microphoneStream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}});
+      displayStream = await navigator.mediaDevices.getDisplayMedia({video: {frameRate: 24}, audio: true});
+      const microphone = microphoneStream.getAudioTracks()[0];
+      if (!microphone) throw new Error(t('mediaMicrophoneMissing'));
+      state.microphone = microphone;
+      state.local = new MediaStream([...displayStream.getVideoTracks(), ...displayStream.getAudioTracks(), microphone]);
+    } else {
+      state.local = await navigator.mediaDevices.getUserMedia({video: {width: {ideal: 1280}, height: {ideal: 720}, frameRate: {ideal: 24}}, audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}});
+      state.microphone = state.local.getAudioTracks()[0] ?? null;
+      if (!state.microphone) throw new Error(t('mediaMicrophoneMissing'));
+    }
+  } catch (error) {
+    microphoneStream?.getTracks().forEach(track => track.stop());
+    displayStream?.getTracks().forEach(track => track.stop());
+    if (screen && !microphoneStream && error instanceof DOMException && error.name === 'NotAllowedError') {
+      throw new Error(t('mediaMicrophonePermissionDenied'));
+    }
+    throw new Error(messageForError(error));
+  }
   state.local.getVideoTracks()[0]?.addEventListener('ended', () => {if (state.host) stop();});
   state.host = true; attach();
 }
@@ -247,12 +269,19 @@ function stop(): void {
   if (state.speech) {const speech = state.speech; state.speech = null; speech.onend = null; speech.stop();}
   if (state.audio) {void state.audio.close().catch(() => {}); state.audio = null;}
   if (state.local) {for (const track of state.local.getTracks()) track.stop(); state.local = null;}
+  state.microphone = null;
   state.remote = null; state.host = false; state.segments = []; state.lastPeak = 0;
   for (const url of state.urls) URL.revokeObjectURL(url); state.urls = [];
 }
 export const media = {
   configure(api: string, token: string, config: MediaConfig): void {state.api = api.replace(/\/$/, ''); state.token = token; state.config = config;},
   prepare, connect, attach, stop, captions, playback, share, messageForError,
+  toggleMicrophone(): boolean {
+    if (!state.microphone) return false;
+    state.microphone.enabled = !state.microphone.enabled;
+    return state.microphone.enabled;
+  },
+  microphoneEnabled(): boolean {return state.microphone?.enabled ?? false;},
 };
 window.StreamMedia = media;
 window.addEventListener('beforeunload', stop);
