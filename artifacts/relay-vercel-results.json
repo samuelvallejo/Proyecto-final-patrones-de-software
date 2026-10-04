@@ -1,17 +1,17 @@
 {
   "passed": true,
   "capture": "synthetic-screen",
-  "webUrl": "https://streamguard-samuel-261002.web.app",
+  "webUrl": "https://streamguard-delta.vercel.app",
   "apiUrl": "https://streamguard-backend.onrender.com",
   "initial": {
-    "time": 0.279828,
+    "time": 0.31686,
     "frames": 11,
     "width": 640,
     "muted": true
   },
   "final": {
-    "time": 12.563849,
-    "frames": 304
+    "time": 12.595801,
+    "frames": 305
   },
   "checks": [
     "Guest receives moving video with WebRTC blocked",
