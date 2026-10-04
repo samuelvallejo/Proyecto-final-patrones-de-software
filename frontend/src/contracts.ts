@@ -10,7 +10,7 @@ export function text(value: Row | null, key: string): string {
   return typeof field === 'string' || typeof field === 'number' ? String(field) : '';
 }
 export function flag(value: Row, key: string): boolean { return value[key] === true; }
-export interface MediaConfig { iceServers?: RTCIceServer[] }
+export interface MediaConfig { iceServers?: RTCIceServer[]; mediaRelayConfigured?: boolean }
 export interface LiveEvent {
   type: string; message?: Json; body?: string; viewers?: number; error?: boolean; hostOnline?: boolean; retryable?: boolean;
   peerId?: string; from?: string; highlightId?: string; text?: string;
@@ -23,5 +23,5 @@ export function liveEvent(value: unknown): LiveEvent {
 }
 export function mediaConfig(value: Row): MediaConfig {
   const iceServers = value.iceServers;
-  return Array.isArray(iceServers) ? {iceServers: iceServers as unknown as RTCIceServer[]} : {};
+  return {iceServers: Array.isArray(iceServers) ? iceServers as unknown as RTCIceServer[] : undefined, mediaRelayConfigured: value.mediaRelayConfigured === true};
 }

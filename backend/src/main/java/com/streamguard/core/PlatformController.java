@@ -118,6 +118,8 @@ public class PlatformController {
         ai.provider(),
         "maxViewers",
         maxViewers,
+        "mediaRelayConfigured",
+        true,
         "iceServers",
         servers,
         "turnConfigured",

@@ -1,4 +1,8 @@
 {
+  "mediaRelayConnecting": "Conectando el video por una ruta compatible con tu red…",
+  "mediaRelayUnavailable": "No se pudo activar la conexión alternativa. Vuelve a entrar al directo.",
+  "mediaEnableSound": "Activar sonido",
+  "mediaDisableSound": "Silenciar sonido",
   "mediaReconnecting": "Reconectando con la transmisión…",
   "uiOnResponseReceivedText01": "No se pudo mostrar la respuesta del servidor",
   "uiOnResponseReceivedText02": "No se pudo completar la operación (",

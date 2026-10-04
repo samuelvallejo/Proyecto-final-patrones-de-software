@@ -36,6 +36,7 @@ public class SecurityConfig {
                 c.requestMatchers(
                         "/actuator/health",
                         "/ws",
+                        "/ws/media",
                         "/api/auth/register",
                         "/api/auth/login",
                         "/api/config",

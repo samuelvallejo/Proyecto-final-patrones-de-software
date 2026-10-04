@@ -1,4 +1,5 @@
 {
+  "mediaRelayUnavailable": "No se pudo activar la conexión alternativa. Vuelve a entrar al directo.",
   "aiServiceModerateText01": "IA ocupada",
   "aiServiceModerateText02": "La IA no respondió o la respuesta fue inválida; requiere revisión humana",
   "aiServiceEditorialText04": "El modelo de IA no está disponible. Intenta generar el análisis nuevamente.",

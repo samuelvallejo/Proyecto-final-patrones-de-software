@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "capture": "synthetic-screen",
+  "webUrl": "http://localhost:5173",
+  "apiUrl": "http://localhost:8080",
+  "initial": {
+    "time": 0.273447,
+    "frames": 11,
+    "width": 640,
+    "muted": true
+  },
+  "final": {
+    "time": 12.568441,
+    "frames": 305
+  },
+  "checks": [
+    "Guest receives moving video with WebRTC blocked",
+    "Sequential media fragments continue beyond seven seconds",
+    "Autoplay starts muted and sound can be enabled",
+    "Publisher relay reconnects while capture remains live",
+    "Late guest receives playable video",
+    "Stream termination reaches guest"
+  ],
+  "errors": []
+}

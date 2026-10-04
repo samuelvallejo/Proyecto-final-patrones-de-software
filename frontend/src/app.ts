@@ -241,12 +241,20 @@ export class StreamGuardApp {
     const stream = object(await this.api.request('GET', `/streams/${this.stream}`)); if (epoch !== this.epoch) return;
     this.content.replaceChildren(); this.title(text(stream, 'channel_name'), text(stream, 'title'), text(stream, 'description'));
     const layout = panel('watch-grid'), player = panel('surface');
-    player.append(html("<div class='video-stage'><video id='live-video' autoplay playsinline controls></video><div class='video-placeholder' id='video-placeholder'>" + icon('video') + t('uiWatchText108')));
+    player.append(html("<div class='video-stage'><video id='live-video' autoplay playsinline muted controls></video><div class='video-placeholder' id='video-placeholder'>" + icon('video') + t('uiWatchText108')));
     const actions = panel('action-row'); this.audience = document.createElement('span'); this.audience.textContent = text(stream, 'viewers') + t('viewerCountSuffix');
     actions.append(this.audience, button(t('uiWatchText109'), 'button primary small', async () => {
       if (!this.user) {toast(t('uiWatchText110'), true); return;}
       await this.api.request('POST', `/channels/${text(stream, 'channel_id')}/follow`, {}); toast(t('uiWatchText111'));
     }));
+    const sound = button(t('mediaEnableSound'), 'button subtle small', () => {
+      const video = document.getElementById('live-video');
+      if (video instanceof HTMLVideoElement) {
+        video.muted = !video.muted; sound.textContent = video.muted ? t('mediaEnableSound') : t('mediaDisableSound');
+        void video.play().catch(() => {});
+      }
+    });
+    actions.append(sound);
     player.append(actions); layout.append(player, this.chatPanel()); this.content.append(layout);
     if (text(stream, 'status') === 'LIVE') {await this.loadMessages(); media.connect(this.stream, false, event => this.realtime(event));}
     else toast(t('uiWatchText112'));

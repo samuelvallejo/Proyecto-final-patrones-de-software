@@ -1,5 +1,6 @@
 import {t, type TranslationKey} from './i18n';
 import {liveEvent, object, text, type Json, type LiveEvent, type MediaConfig} from './contracts';
+import {relay} from './relay';
 
 interface Segment {blob: Blob; start: number; end: number}
 interface SpeechResult {isFinal: boolean; [index: number]: {transcript: string}}
@@ -22,6 +23,7 @@ interface MediaState {
   api: string; token: string; config: MediaConfig;
   local: MediaStream | null; remote: MediaStream | null; ws: WebSocket | null;
   microphone: MediaStreamTrack | null;
+  captures: MediaStream[]; mixer: AudioContext | null;
   peers: Map<string, RTCPeerConnection>; pending: Map<string, RTCIceCandidateInit[]>;
   host: boolean; stream: string; started: number; recorderStarted: number;
   segments: Segment[]; recorder: MediaRecorder | null; interval?: number;
@@ -29,10 +31,12 @@ interface MediaState {
   audio: AudioContext | null; audioTimer?: number; speech: SpeechRecognizer | null;
   urls: string[]; lastPeak: number;
   reconnectTimer?: number; keepAliveTimer?: number; reconnectAttempts: number;
+  fallbackTimer?: number;
 }
 const state: MediaState = {
   api: '', token: '', config: {}, local: null, remote: null, ws: null,
   microphone: null,
+  captures: [], mixer: null,
   peers: new Map(), pending: new Map(), host: false, stream: '', started: 0,
   recorderStarted: 0, segments: [], recorder: null, callback: () => {},
   stopping: false, capture: null, audio: null, speech: null, urls: [], lastPeak: 0,
@@ -61,9 +65,12 @@ async function request(path: string, body: Json | FormData): Promise<Json> {
 }
 function emit(event: LiveEvent): void { state.callback(event); }
 function attach(): void {
+  if (!state.host && relay.viewerActive()) return;
   const element = document.getElementById('live-video'); const source = state.host ? state.local : state.remote;
   if (element instanceof HTMLVideoElement && source) {
-    element.srcObject = source; element.muted = state.host; void element.play().catch(() => {});
+    if (element.srcObject !== source) element.srcObject = source;
+    element.dataset.transport = 'webrtc'; if (state.host) element.muted = true;
+    void element.play().catch(() => {});
     const placeholder = document.getElementById('video-placeholder'); if (placeholder) placeholder.style.display = 'none';
   }
 }
@@ -71,6 +78,20 @@ function send(data: unknown): void { if (state.ws?.readyState === WebSocket.OPEN
 function closePeers(): void { for (const peer of state.peers.values()) peer.close(); state.peers.clear(); state.pending.clear(); }
 function recorderType(): string | undefined {
   return ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'].find(type => window.MediaRecorder?.isTypeSupported(type));
+}
+function useRelay(): void {
+  window.clearTimeout(state.fallbackTimer); state.fallbackTimer = undefined;
+  if (state.stopping || state.host || !state.config.mediaRelayConfigured || relay.viewerActive()) return;
+  relay.start(state.api, state.token, state.stream, null, '', message => emit({type: 'notice', body: message}));
+  emit({type: 'notice', body: t('mediaRelayConnecting')});
+}
+function awaitVideo(): void {
+  if (state.host || !state.config.mediaRelayConfigured || state.fallbackTimer || relay.viewerActive()) return;
+  state.fallbackTimer = window.setTimeout(() => {
+    state.fallbackTimer = undefined;
+    const connected = [...state.peers.values()].some(peer => peer.connectionState === 'connected');
+    if (!connected) useRelay();
+  }, 8000);
 }
 async function prepare(screen: boolean): Promise<void> {
   if (!navigator.mediaDevices) throw new Error(t('mediaText02'));
@@ -80,14 +101,27 @@ async function prepare(screen: boolean): Promise<void> {
   let displayStream: MediaStream | null = null;
   try {
     if (screen) {
-      // Screen capture audio is optional and represents system audio. Request
-      // the microphone separately so the creator's voice is always included.
-      microphoneStream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}});
+      // Open the screen chooser during the initiating user gesture. Microphone
+      // permission is independent of the optional system-audio selection.
       displayStream = await navigator.mediaDevices.getDisplayMedia({video: {frameRate: 24}, audio: true});
+      state.captures.push(displayStream);
+      microphoneStream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}});
+      state.captures.push(microphoneStream);
       const microphone = microphoneStream.getAudioTracks()[0];
       if (!microphone) throw new Error(t('mediaMicrophoneMissing'));
       state.microphone = microphone;
-      state.local = new MediaStream([...displayStream.getVideoTracks(), ...displayStream.getAudioTracks(), microphone]);
+      let audioTracks = [microphone];
+      if (displayStream.getAudioTracks().length) {
+        const Audio = window.AudioContext || window.webkitAudioContext;
+        if (Audio) {
+          const mixer = new Audio(); state.mixer = mixer;
+          const destination = mixer.createMediaStreamDestination();
+          mixer.createMediaStreamSource(displayStream).connect(destination);
+          mixer.createMediaStreamSource(microphoneStream).connect(destination);
+          void mixer.resume().catch(() => {}); audioTracks = destination.stream.getAudioTracks();
+        }
+      }
+      state.local = new MediaStream([...displayStream.getVideoTracks(), ...audioTracks]);
     } else {
       state.local = await navigator.mediaDevices.getUserMedia({video: {width: {ideal: 1280}, height: {ideal: 720}, frameRate: {ideal: 24}}, audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}});
       state.microphone = state.local.getAudioTracks()[0] ?? null;
@@ -96,7 +130,8 @@ async function prepare(screen: boolean): Promise<void> {
   } catch (error) {
     microphoneStream?.getTracks().forEach(track => track.stop());
     displayStream?.getTracks().forEach(track => track.stop());
-    if (screen && !microphoneStream && error instanceof DOMException && error.name === 'NotAllowedError') {
+    stop();
+    if (screen && displayStream && !microphoneStream && error instanceof DOMException && error.name === 'NotAllowedError') {
       throw new Error(t('mediaMicrophonePermissionDenied'));
     }
     throw new Error(messageForError(error));
@@ -108,8 +143,22 @@ function createPeer(id: string): RTCPeerConnection {
   const peer = new RTCPeerConnection({iceServers: state.config.iceServers ?? [{urls: 'stun:stun.l.google.com:19302'}]});
   state.peers.set(id, peer);
   peer.onicecandidate = event => {if (event.candidate) send({type: 'signal', to: id, payload: {candidate: event.candidate}});};
-  peer.ontrack = event => {state.remote = event.streams[0] ?? new MediaStream([event.track]); attach();};
-  peer.onconnectionstatechange = () => {if (peer.connectionState === 'failed') emit({type: 'error', message: t('mediaText04')});};
+  peer.ontrack = event => {
+    if (event.streams[0]) state.remote = event.streams[0];
+    else {state.remote ??= new MediaStream(); state.remote.addTrack(event.track);}
+    attach();
+  };
+  peer.onconnectionstatechange = () => {
+    if (peer.connectionState === 'connected' && !state.host) {
+      window.clearTimeout(state.fallbackTimer); state.fallbackTimer = undefined;
+      relay.stop(); attach();
+    }
+    if (peer.connectionState === 'failed') {
+      if (!state.host && state.config.mediaRelayConfigured) useRelay();
+      else if (!state.config.mediaRelayConfigured) emit({type: 'error', message: t('mediaText04')});
+    }
+    if (peer.connectionState === 'disconnected' && !state.host) awaitVideo();
+  };
   if (state.host && state.local) for (const track of state.local.getTracks()) peer.addTrack(track, state.local);
   return peer;
 }
@@ -130,6 +179,7 @@ async function signal(event: LiveEvent): Promise<void> {
   }
 }
 function connect(stream: string, host: boolean, callback: (event: LiveEvent) => void): void {
+  window.clearTimeout(state.fallbackTimer); state.fallbackTimer = undefined;
   window.clearTimeout(state.reconnectTimer); window.clearInterval(state.keepAliveTimer);
   if (state.ws) {state.ws.onclose = null; state.ws.close();} closePeers();
   state.stream = stream; state.host = host; state.callback = callback; state.stopping = false;
@@ -144,13 +194,17 @@ function connect(stream: string, host: boolean, callback: (event: LiveEvent) => 
         joined = true; state.reconnectAttempts = 0;
         state.keepAliveTimer = window.setInterval(() => send({type: 'ping'}), 20000);
         if (host && !state.recorder) {state.started = Date.now(); startRecording(); startAudio();}
+        if (host && state.config.mediaRelayConfigured) relay.start(state.api, state.token, stream, state.local, recorderType() ?? '', message => emit({type: 'notice', body: message}));
+        if (!host && event.hostOnline) awaitVideo();
         attach();
       }
       if (event.type === 'error' && !joined) {
         if (event.retryable && host && state.reconnectAttempts > 0) {ws.close(); return;}
         ws.onclose = null; stop();
       }
-      if (event.type === 'presence' && !host && event.hostOnline === false) closePeers();
+      if (event.type === 'presence' && !host) {
+        if (event.hostOnline === false) closePeers(); else awaitVideo();
+      }
       if (event.type === 'viewer-joined' && host && event.peerId) {
         const peer = createPeer(event.peerId); await peer.setLocalDescription(await peer.createOffer());
         send({type: 'signal', to: event.peerId, payload: {description: peer.localDescription}});
@@ -262,12 +316,15 @@ async function share(asset: string, title: string): Promise<boolean> {
   }
 }
 function stop(): void {
+  window.clearTimeout(state.fallbackTimer); state.fallbackTimer = undefined; relay.stop();
   window.clearTimeout(state.reconnectTimer); window.clearInterval(state.keepAliveTimer); state.reconnectAttempts = 0;
   state.stopping = true; state.capture = null; window.clearTimeout(state.interval); window.clearInterval(state.audioTimer);
   if (state.recorder?.state === 'recording') state.recorder.stop(); state.recorder = null;
   const ws = state.ws; state.ws = null; if (ws) {ws.onclose = null; ws.close();} closePeers();
   if (state.speech) {const speech = state.speech; state.speech = null; speech.onend = null; speech.stop();}
   if (state.audio) {void state.audio.close().catch(() => {}); state.audio = null;}
+  if (state.mixer) {void state.mixer.close().catch(() => {}); state.mixer = null;}
+  for (const capture of state.captures) capture.getTracks().forEach(track => track.stop()); state.captures = [];
   if (state.local) {for (const track of state.local.getTracks()) track.stop(); state.local = null;}
   state.microphone = null;
   state.remote = null; state.host = false; state.segments = []; state.lastPeak = 0;
