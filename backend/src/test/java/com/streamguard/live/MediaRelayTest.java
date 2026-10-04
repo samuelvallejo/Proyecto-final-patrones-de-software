@@ -117,4 +117,19 @@ class MediaRelayTest {
     join(replacement, true, "owner-token");
     verify(replacement, never()).close(any());
   }
+
+  @Test
+  void delayedPublisherCloseCannotEvictItsAuthenticatedReplacement() throws Exception {
+    var original = socket("original");
+    var replacement = socket("replacement");
+    var viewer = socket("viewer");
+    join(original, true, "owner-token");
+    join(viewer, false, "");
+    join(replacement, true, "owner-token");
+    verify(original).close(CloseStatus.POLICY_VIOLATION);
+    relay.afterConnectionClosed(original, CloseStatus.POLICY_VIOLATION);
+    relay.handleBinaryMessage(replacement, new BinaryMessage(new byte[] {1}));
+    verify(viewer, timeout(2000)).sendMessage(isA(BinaryMessage.class));
+    verify(replacement, never()).close(any());
+  }
 }

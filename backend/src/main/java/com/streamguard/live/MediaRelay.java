@@ -75,8 +75,7 @@ public class MediaRelay extends AbstractWebSocketHandler {
       if (host && !FORMATS.contains(format)) throw new IllegalArgumentException();
       if (!rooms.containsKey(stream) && rooms.size() >= 16) throw new IllegalStateException();
       Room room = rooms.computeIfAbsent(stream, id -> new Room());
-      if ((host && room.host != null) || (!host && room.viewers.size() >= maxViewers))
-        throw new IllegalStateException();
+      if (!host && room.viewers.size() >= maxViewers) throw new IllegalStateException();
       Peer peer =
           new Peer(
               new ConcurrentWebSocketSessionDecorator(socket, 5000, MAX_FRAGMENT * 2),
@@ -85,9 +84,19 @@ public class MediaRelay extends AbstractWebSocketHandler {
               new AtomicBoolean());
       peers.put(socket.getId(), peer);
       if (host) {
+        // The authenticated owner can reconnect before a delayed close callback arrives.
+        // Remove the old publisher first so its callback cannot evict the replacement.
+        Peer previous = room.host == null ? null : peers.remove(room.host);
         room.host = socket.getId();
         room.format = format;
         room.latest = null;
+        if (previous != null) {
+          try {
+            previous.socket().close(CloseStatus.POLICY_VIOLATION);
+          } catch (Exception ignored) {
+            /* A half-closed connection must not prevent the owner from recovering. */
+          }
+        }
         send(peer, Map.of("type", "relay-ready", "viewers", room.viewers.size()));
         for (String viewer : room.viewers)
           send(peers.get(viewer), Map.of("type", "relay-format", "format", format));

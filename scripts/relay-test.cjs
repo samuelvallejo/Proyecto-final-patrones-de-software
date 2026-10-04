@@ -14,6 +14,23 @@ const output = path.join(__dirname, '../artifacts/relay-test-results.json');
   const browser = await chromium.launch({headless: true, channel: process.env.TEST_BROWSER_CHANNEL || 'chrome', args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream']});
   const errors = [];
   let streamId = '', token = '';
+  let host, guest, completed = false;
+  function observeSockets() {
+    const Socket = window.WebSocket; window.testSockets = []; window.socketEvents = [];
+    window.WebSocket = class extends Socket {
+      constructor(...args) {
+        super(...args); window.testSockets.push(this);
+        const route = this.url.replace(/^wss?:\/\/[^/]+/, '');
+        this.addEventListener('close', event => window.socketEvents.push({route, event: 'close', code: event.code, reason: event.reason}));
+        this.addEventListener('message', event => {
+          if (typeof event.data === 'string') {
+            const data = JSON.parse(event.data);
+            if (route === '/ws/media') window.socketEvents.push({route, event: data.type, viewers: data.viewers, message: data.message});
+          } else if (route === '/ws/media') window.socketEvents.push({route, event: 'binary', bytes: event.data.byteLength || event.data.size});
+        });
+      }
+    };
+  }
   async function call(route, body) {
     const response = await fetch(`${api}/api${route}`, {method: 'POST', headers: {'Content-Type': 'application/json', ...(token ? {Authorization: `Bearer ${token}`} : {})}, body: JSON.stringify(body)});
     const value = await response.json(); if (!response.ok) throw new Error(`Test API ${route}: ${response.status}`); return value;
@@ -25,10 +42,10 @@ const output = path.join(__dirname, '../artifacts/relay-test-results.json');
     const hostContext = await browser.newContext({permissions: ['camera', 'microphone'], viewport: {width: 1400, height: 950}});
     await hostContext.addInitScript(token => {
       sessionStorage.setItem('streamguard.token', token);
-      const Socket = window.WebSocket; window.testSockets = [];
-      window.WebSocket = class extends Socket {constructor(...args) {super(...args); window.testSockets.push(this);}};
     }, token);
-    const host = await hostContext.newPage(); host.on('pageerror', error => errors.push(error.message));
+    await hostContext.addInitScript(observeSockets);
+    host = await hostContext.newPage(); host.on('pageerror', error => errors.push(error.message));
+    host.on('console', message => {if (message.type() === 'warning' || message.type() === 'error') console.log('Host browser:', message.text());});
     if (screenCapture) await host.addInitScript(() => {
       const nativeCapture = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
       navigator.mediaDevices.getDisplayMedia = async () => {
@@ -57,11 +74,13 @@ const output = path.join(__dirname, '../artifacts/relay-test-results.json');
     assert.equal(await host.evaluate(() => window.StreamMedia.microphoneEnabled()), false);
     await host.getByRole('button', {name: ui.uiStudioText105, exact: true}).click();
     const guestContext = await browser.newContext({viewport: {width: 1250, height: 850}});
+    await guestContext.addInitScript(observeSockets);
     await guestContext.addInitScript(() => {
       const Peer = window.RTCPeerConnection; window.testPeers = [];
       window.RTCPeerConnection = class extends Peer {constructor(config) {super({...config, iceTransportPolicy: 'relay', iceServers: []}); window.testPeers.push(this);}};
     });
-    const guest = await guestContext.newPage(); guest.on('pageerror', error => errors.push(error.message));
+    guest = await guestContext.newPage(); guest.on('pageerror', error => errors.push(error.message));
+    guest.on('console', message => {if (message.type() === 'warning' || message.type() === 'error') console.log('Guest browser:', message.text());});
     await guest.goto(web);
     await guest.locator('.stream-card').filter({hasText: title}).getByRole('button', {name: ui.uiExploreText32, exact: true}).click();
     await guest.waitForFunction(() => {
@@ -93,7 +112,14 @@ const output = path.join(__dirname, '../artifacts/relay-test-results.json');
     assert.deepEqual(errors, []);
     const result = {passed: true, capture: screenCapture ? 'synthetic-screen' : 'synthetic-camera', webUrl: web, apiUrl: api, initial, final, checks: ['Guest receives moving video with WebRTC blocked', 'Sequential media fragments continue beyond seven seconds', 'Autoplay starts muted and sound can be enabled', 'Publisher relay reconnects while capture remains live', 'Late guest receives playable video', 'Stream termination reaches guest'], errors};
     fs.writeFileSync(output, JSON.stringify(result, null, 2)); console.log(JSON.stringify(result, null, 2));
+    completed = true;
   } finally {
+    if (!completed) for (const [role, page] of [['host', host], ['guest', guest]]) {
+      if (page && !page.isClosed()) console.log(role, await page.evaluate(() => {
+        const video = document.querySelector('#live-video');
+        return {events: window.socketEvents, video: video ? {time: video.currentTime, ready: video.readyState, paused: video.paused, ended: video.ended, error: video.error?.message, buffered: Array.from({length: video.buffered.length}, (_, i) => [video.buffered.start(i), video.buffered.end(i)])} : null};
+      }));
+    }
     if (streamId) await call(`/streams/${streamId}/end`, {}).catch(() => {});
     if (token) await call('/auth/logout', {}).catch(() => {});
     await browser.close();
