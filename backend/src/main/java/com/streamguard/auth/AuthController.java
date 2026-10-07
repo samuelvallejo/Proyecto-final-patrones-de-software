@@ -16,7 +16,11 @@ public class AuthController {
 
   public record Register(
       @NotBlank @Pattern(regexp = "[A-Za-z0-9_]{3,32}") String username,
-      @NotBlank @Email @Size(max = 254) String email,
+      @NotBlank
+          @Email
+          @Pattern(regexp = "(?i)^[^@\\s]+@(gmail\\.com|hotmail\\.com)$")
+          @Size(max = 254)
+          String email,
       @NotBlank @Size(min = 10, max = 72) String password,
       @AssertTrue boolean aiConsent) {}
 

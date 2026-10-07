@@ -107,8 +107,8 @@ public class AiService {
     } catch (Exception e) {
       log.warn("Moderation provider {} failed: {}", provider, e.getMessage());
       Verdict result =
-          new Verdict("UNCERTAIN", .6, Messages.text("aiServiceModerateText02"), "UNAVAILABLE");
-      response(id, result, start, "FAILED");
+          new Verdict(local.category(), local.confidence(), local.reason(), "LOCAL_RULES");
+      response(id, result, start, "FALLBACK");
       return new Analysis(id, result);
     } finally {
       if (acquired) slots.release();

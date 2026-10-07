@@ -63,6 +63,11 @@ public interface AiToolkitFactory {
     public ModerationAnalyzer moderation() {
       return (text, policy) -> {
         String normalized = normalize(text);
+        if (normalized.matches(
+            "(?s).*\\b(?:put[oa]s?|mierda|hijueput[oa]s?|malparid[oa]s?|gonorre[ao]s?|"
+                + "estupid[oa]s?|idiotas?|imbecil(?:es)?|pendej[oa]s?|maricon(?:es)?|perra[s]?)\\b.*"))
+          return new Verdict(
+              "OFFENSIVE", 1, Messages.text("aiToolkitFactoryModerationText04"), "LOCAL_RULES");
         for (String word : policy.blockedWords())
           if (normalized.matches(
               "(?s).*\\b" + java.util.regex.Pattern.quote(normalize(word)) + "\\b.*"))

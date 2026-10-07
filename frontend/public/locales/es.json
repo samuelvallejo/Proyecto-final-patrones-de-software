@@ -1,6 +1,12 @@
 {
   "mediaRelayConnecting": "Conectando el video por una ruta compatible con tu red…",
   "mediaRelayUnavailable": "No se pudo activar la conexión alternativa. Vuelve a entrar al directo.",
+  "authProviderEmailRequired": "Necesita ser @gmail o @hotmail.",
+  "authPasswordStrengthHint": "Usa al menos 10 caracteres; combina mayúsculas, números y símbolos para aumentar la seguridad.",
+  "authPasswordStrengthLow": "Nivel de la contraseña bajo. Añade más caracteres y mezcla letras, números o símbolos.",
+  "authPasswordStrengthMedium": "Nivel de la contraseña medio. Agrega algún símbolo para reforzarla.",
+  "authPasswordStrengthHigh": "Nivel de la contraseña alto.",
+  "uiHostDisconnected": "El creador perdió la conexión. La transmisión se cerrará si no vuelve pronto.",
   "mediaEnableSound": "Activar sonido",
   "mediaDisableSound": "Silenciar sonido",
   "mediaReconnecting": "Reconectando con la transmisión…",
@@ -269,6 +275,6 @@
   "activeSanctions": "Sanciones activas",
   "shareFailed": "No se pudo compartir el clip. Revisa los permisos del navegador y vuelve a intentarlo.",
   "localAiConfigured": "Modelo local configurado",
-  "localAiAvailability": "La moderación y los resúmenes usan Ollama. El computador del modelo debe estar encendido y conectado a ngrok; los fallos pasan a revisión humana.",
+  "localAiAvailability": "La moderación semántica y los resúmenes usan Ollama. El computador del modelo debe estar encendido y conectado a ngrok; las reglas locales mantienen el chat funcionando si el modelo no responde.",
   "localAiProvider": "Modelo local · Ollama"
 }

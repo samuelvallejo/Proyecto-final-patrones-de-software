@@ -14,10 +14,10 @@ Proyecto académico de streaming con frontend **TypeScript estricto / Vite**, ba
 
 ## Funciones implementadas
 
-- Registro con consentimiento para el análisis del chat, inicio y cierre de sesión, contraseñas BCrypt y sesiones con tokens opacos almacenados como hash.
+- Registro con consentimiento, correo de Gmail o Hotmail, nivel de contraseña en tiempo real, inicio/cierre de sesión, contraseñas BCrypt y sesiones con tokens opacos almacenados como hash.
 - Creación de canales, categorías, seguidores e invitación de moderadores existentes.
 - Transmisión de cámara o pantalla con audio mediante WebRTC y señalización WebSocket autenticada. Visualización de directos y chat persistente en tiempo real.
-- Moderación con reglas locales y clasificación semántica de Ollama; palabras/temas restringidos, enlaces, repetición, modo lento, advertencias y silencios temporales.
+- Moderación con reglas locales y clasificación semántica de Ollama: saludos permitidos, detección de insultos, palabras/temas restringidos, enlaces, repetición, modo lento, advertencias y silencios temporales.
 - Cola humana para casos ambiguos y mensajes ocultos, aprobación/rechazo, sanciones y revocación.
 - Marcadores manuales, detección de aumentos del chat y del nivel del audio. Captura real de segmentos recientes con MediaRecorder, validación y procesamiento con FFmpeg.
 - Revisión de clips, edición de títulos/descripciones, recorte de video, descarga y enlaces para compartir clips aprobados.
@@ -59,7 +59,7 @@ Es una implementación funcional para demostración académica y comunidades peq
 
 Los clips capturan el segmento actual o el segmento reciente de hasta aproximadamente **15 segundos**; no se guarda automáticamente todo el directo. La detección de audio mide energía, no interpreta escenas. Los resúmenes analizan chat, marcadores y transcripción disponible, no el video completo. La transcripción depende de la API de voz del navegador y de permisos del micrófono. Los clips se generan como WebM; los enlaces de compartir abren el clip dentro de la plataforma.
 
-El computador del modelo debe permanecer encendido y conectado a ngrok. Una respuesta fallida o inválida pasa a revisión humana. Las reglas explícitas siguen funcionando aunque el modelo esté apagado. `AI_PROVIDER=local-rules` permite trabajar sin modelo y no simula análisis de IA. El video intenta WebRTC directo y, si la red lo bloquea, pasa automáticamente a fragmentos por WSS a través del backend existente. Esta alternativa agrega unos segundos de retraso y no necesita otra cuenta ni credenciales TURN. TURN sigue siendo una opción configurable para WebRTC.
+El computador del modelo debe permanecer encendido y conectado a ngrok para el análisis semántico. Si el proveedor no responde, el backend usa reglas locales: conserva los mensajes cotidianos y filtra insultos explícitos. `AI_PROVIDER=local-rules` desactiva el modelo explícitamente y no simula análisis semántico. WebSocket detecta cuándo el creador deja de responder, finaliza el directo y avisa a los espectadores. El video intenta WebRTC directo y, si la red lo bloquea, pasa automáticamente a fragmentos por WSS a través del backend existente. Esta alternativa agrega unos segundos de retraso y no necesita otra cuenta ni credenciales TURN. TURN sigue siendo una opción configurable para WebRTC.
 
 El modelo incluye tablas para futuras extensiones (suscripciones, insignias, emotes, listas, webhooks y apelaciones). No se incluyen cobros ni entrega externa de webhooks en esta versión. Ver la separación exacta entre funciones operativas y extensiones en la documentación de la base de datos.
 

@@ -10,3 +10,4 @@
 .app-dialog{padding:0;max-width:calc(100vw - 24px);border:1px solid var(--border);border-radius:18px;background:var(--surface);color:var(--text)}.app-dialog::backdrop{background:#0009}.dialog-heading{font-size:18px;padding:20px 24px 0}.dialog-form{max-width:calc(100vw - 26px)}.setting-checkbox,.consent{display:block;line-height:1.7}
 /* Wait for bootstrap data before mounting interactive forms. */
 .startup-loading{min-height:100dvh;display:grid;place-items:center;color:var(--muted);padding:2rem;text-align:center}
+.form-hint,.password-strength{display:block;margin-top:6px;color:var(--muted);font-size:11px;line-height:1.6}.field-error,.strength-low{color:#ff929b}.strength-medium{color:#e8c574}.strength-high{color:var(--lime)}

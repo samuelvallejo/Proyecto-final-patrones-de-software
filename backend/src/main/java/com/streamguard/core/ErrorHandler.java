@@ -31,6 +31,8 @@ public class ErrorHandler {
     String code = error.getCode() == null ? "" : error.getCode();
     String messageKey;
     if (code.equals("Pattern") && error.getField().equals("slug")) messageKey = "validationSlug";
+    else if (code.equals("Pattern") && error.getField().equals("email"))
+      messageKey = "validationProviderEmail";
     else if (code.equals("Pattern") && error.getField().equals("username"))
       messageKey = "validationUsername";
     else

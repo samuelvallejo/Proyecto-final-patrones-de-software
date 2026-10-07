@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
@@ -20,6 +21,8 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 /** Authenticated signaling only; media travels peer-to-peer, never through this socket. */
 @Component
 public class LiveHub extends TextWebSocketHandler {
+  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LiveHub.class);
+
   private static final class HostAlreadyOnline extends ApiError {
     HostAlreadyOnline() {
       super(409, Messages.text("liveHubHandleTextMessageText04"));
@@ -42,7 +45,8 @@ public class LiveHub extends TextWebSocketHandler {
       UUID user,
       boolean host,
       boolean moderator,
-      UUID viewerSession) {}
+      UUID viewerSession,
+      AtomicLong lastPing) {}
 
   private static class Room {
     String host;
@@ -56,6 +60,17 @@ public class LiveHub extends TextWebSocketHandler {
     this.auth = auth;
     this.json = json;
     this.maxViewers = maxViewers;
+    disconnects.scheduleAtFixedRate(
+        () -> {
+          try {
+            expireUnresponsiveHosts();
+          } catch (Exception error) {
+            log.warn("Could not check streaming host heartbeats: {}", error.getMessage());
+          }
+        },
+        20,
+        10,
+        TimeUnit.SECONDS);
   }
 
   @Override
@@ -107,7 +122,16 @@ public class LiveHub extends TextWebSocketHandler {
                         + " id",
                     stream,
                     user);
-        peers.put(socket.getId(), new Peer(wrapped, stream, user, host, moderator, view));
+        peers.put(
+            socket.getId(),
+            new Peer(
+                wrapped,
+                stream,
+                user,
+                host,
+                moderator,
+                view,
+                new AtomicLong(System.currentTimeMillis())));
         if (host) {
           if (room.expiry != null) {
             room.expiry.cancel(false);
@@ -155,8 +179,10 @@ public class LiveHub extends TextWebSocketHandler {
           send(
               target.socket(),
               Map.of("type", "signal", "from", socket.getId(), "payload", data.path("payload")));
-        } else if (type.equals("ping")) send(sender.socket(), Map.of("type", "pong"));
-        else throw new ApiError(400, Messages.text("liveHubUnknownEvent"));
+        } else if (type.equals("ping")) {
+          sender.lastPing().set(System.currentTimeMillis());
+          send(sender.socket(), Map.of("type", "pong"));
+        } else throw new ApiError(400, Messages.text("liveHubUnknownEvent"));
       }
     } catch (Exception e) {
       send(
@@ -206,6 +232,36 @@ public class LiveHub extends TextWebSocketHandler {
         stream,
         Map.of("type", "ended", "message", Messages.text("liveHubAfterConnectionClosedText09")));
     if (room.viewers.isEmpty()) rooms.remove(stream);
+  }
+
+  private synchronized void expireUnresponsiveHosts() {
+    long cutoff = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(35);
+    var staleHosts =
+        peers.values().stream()
+            .filter(peer -> peer.host() && peer.lastPing().get() < cutoff)
+            .toList();
+    for (Peer peer : staleHosts) {
+      Room room = rooms.get(peer.stream());
+      if (room == null || !peer.socket().getId().equals(room.host)) continue;
+      if (db.count("SELECT count(*) FROM streams WHERE id=? AND status='LIVE'", peer.stream()) == 0)
+        continue;
+      if (!peers.remove(peer.socket().getId(), peer)) continue;
+      room.host = null;
+      if (room.expiry != null) room.expiry.cancel(false);
+      room.expiry = null;
+      db.exec(
+          "UPDATE streams SET status='ENDED',ended_at=now() WHERE id=? AND status='LIVE'",
+          peer.stream());
+      broadcast(
+          peer.stream(),
+          Map.of("type", "ended", "message", Messages.text("liveHubAfterConnectionClosedText09")));
+      try {
+        if (peer.socket().isOpen()) peer.socket().close(CloseStatus.SESSION_NOT_RELIABLE);
+      } catch (Exception error) {
+        log.debug("Could not close an unresponsive host socket: {}", error.getMessage());
+      }
+      if (room.viewers.isEmpty()) rooms.remove(peer.stream());
+    }
   }
 
   @PreDestroy

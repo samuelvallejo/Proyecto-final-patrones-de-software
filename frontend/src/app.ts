@@ -126,14 +126,37 @@ export class StreamGuardApp {
     this.title(t('welcomeEyebrow'), register ? t('uiAuthViewText38') : t('uiAuthViewText39'), register ? t('uiAuthViewText40') : t('uiAuthViewText41'));
     const card = panel('form-card auth-card'), username = input(t('uiAuthViewText42')), email = input(t('uiAuthViewText43')), password = input(t('uiAuthViewText44'));
     email.type = 'email'; email.autocomplete = 'email'; password.type = 'password'; password.autocomplete = register ? 'new-password' : 'current-password';
+    password.minLength = register ? 10 : 0;
+    const emailField = field(t('uiAuthViewText46'), email), emailHint = document.createElement('small');
+    emailHint.className = 'form-hint'; emailHint.setAttribute('role', 'status'); emailHint.setAttribute('aria-live', 'polite');
+    if (register) emailField.append(emailHint);
+    const passwordField = field(t('uiAuthViewText47'), password), passwordHint = document.createElement('small');
+    passwordHint.className = 'password-strength'; passwordHint.setAttribute('role', 'status'); passwordHint.setAttribute('aria-live', 'polite');
+    if (register) {passwordHint.textContent = t('authPasswordStrengthHint'); passwordField.append(passwordHint);}
+    const acceptedEmail = () => /^[^\s@]+@(gmail\.com|hotmail\.com)$/i.test(email.value.trim());
+    const updateEmailHint = () => {
+      const invalid = register && email.value.length > 0 && !acceptedEmail();
+      emailHint.textContent = invalid ? t('authProviderEmailRequired') : '';
+      emailHint.classList.toggle('field-error', invalid);
+    };
+    const updatePasswordHint = () => {
+      const value = password.value, characterGroups = [/[a-z]/, /[A-Z]/, /[0-9]/, /[^a-zA-Z0-9]/].filter(pattern => pattern.test(value)).length;
+      const low = value.length < 12 || characterGroups < 3;
+      passwordHint.textContent = !value ? t('authPasswordStrengthHint') : low ? t('authPasswordStrengthLow')
+        : value.length >= 15 && characterGroups === 4 ? t('authPasswordStrengthHigh') : t('authPasswordStrengthMedium');
+      passwordHint.className = `password-strength ${!value ? '' : low ? 'strength-low' : value.length >= 15 && characterGroups === 4 ? 'strength-high' : 'strength-medium'}`;
+    };
+    email.addEventListener('input', updateEmailHint);
+    password.addEventListener('input', updatePasswordHint);
     const consent = checkbox(t('uiAuthViewText48'), false, 'consent');
     if (register) card.append(field(t('uiAuthViewText45'), username));
-    card.append(field(t('uiAuthViewText46'), email), field(t('uiAuthViewText47'), password)); if (register) card.append(consent.element);
+    card.append(emailField, passwordField); if (register) card.append(consent.element);
     const submit = button(register ? t('createAccount') : t('signIn'), 'button primary full', async () => {
+      if (register && !acceptedEmail()) {updateEmailHint(); emailHint.textContent = t('authProviderEmailRequired'); emailHint.classList.add('field-error'); email.focus(); return;}
       if (register && (username.value.length < 3 || password.value.length < 10 || !consent.control.checked)) {toast(t('uiAuthViewText49'), true); return;}
       submit.disabled = true;
       try {
-        const body: Row = {email: email.value, password: password.value}; if (register) {body.username = username.value; body.aiConsent = consent.control.checked;}
+        const body: Row = {email: email.value.trim(), password: password.value}; if (register) {body.username = username.value; body.aiConsent = consent.control.checked;}
         const data = object(await this.api.request('POST', register ? '/auth/register' : '/auth/login', body));
         this.api.setToken(text(data, 'token')); this.user = object(data.user); this.configureMedia(); this.channel = ''; this.dashboard = {}; this.route('studio');
       } finally {submit.disabled = false;}
@@ -282,7 +305,10 @@ export class StreamGuardApp {
   private realtime(event: LiveEvent): void {
     switch (event.type) {
       case 'message': this.appendMessage(object(event.message)); break;
-      case 'presence': if (this.audience) this.audience.textContent = String(event.viewers ?? 0) + t('viewerCountSuffix'); break;
+      case 'presence':
+        if (this.audience) this.audience.textContent = String(event.viewers ?? 0) + t('viewerCountSuffix');
+        if (event.hostOnline === false) toast(t('uiHostDisconnected'));
+        break;
       case 'notice': toast(event.body ?? ''); break;
       case 'error': toast(typeof event.message === 'string' ? event.message : t('mediaEventFailed'), true); break;
       case 'ended':

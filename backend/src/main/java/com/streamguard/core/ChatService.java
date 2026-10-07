@@ -106,7 +106,8 @@ public class ChatService {
                   finalVerdict.reason(),
                   finalVerdict.provider());
               ModerationActionCreator creator;
-              if (finalVerdict.category().equals("UNCERTAIN"))
+              if (finalVerdict.category().equals("UNCERTAIN")
+                  && finalVerdict.confidence() >= policy.reviewThreshold())
                 creator = new ModerationActionCreator.ReviewCreator();
               else if (!finalVerdict.category().equals("SAFE")
                   && finalVerdict.confidence() >= policy.blockThreshold())

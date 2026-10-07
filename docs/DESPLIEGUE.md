@@ -72,11 +72,11 @@ Vercel recibe solamente el origen público del backend. No añadas `PGPASSWORD` 
 
 El proveedor de esta instalación es Ollama, con Qwen3:4b-instruct en el computador del propietario y ngrok como túnel. Configura las cuatro variables indicadas en [IA_LOCAL.md](IA_LOCAL.md). El authtoken de ngrok queda local; Render recibe solamente la URL y la clave independiente de la pasarela.
 
-Configurar un proveedor no demuestra que una solicitud haya sido exitosa: envía un mensaje o genera un resumen y comprueba `ai_requests` y `ai_responses`. Los fallos del proveedor pasan a revisión humana. `AI_PROVIDER=local-rules` desactiva el modelo explícitamente; Gemini sigue disponible como adaptador alternativo, sin configurar en este despliegue.
+Configurar un proveedor no demuestra que una solicitud haya sido exitosa: genera un mensaje de prueba o un resumen y comprueba `ai_requests` y `ai_responses`. Si falla la clasificación semántica, el backend conserva las reglas locales para que los saludos sigan visibles y se oculten los insultos explícitos. Los casos que la IA marca como dudosos con suficiente confianza continúan en revisión humana. `AI_PROVIDER=local-rules` desactiva el modelo explícitamente; Gemini sigue disponible como adaptador alternativo, sin configurar en este despliegue.
 
 WebRTC usa STUN, una conexión por espectador y un máximo de seis espectadores por directo. Si la conexión directa no se establece en ocho segundos o falla después, el espectador utiliza `/ws/media`: fragmentos de video y audio por WSS a través del backend Java de Render. El emisor solo produce esos fragmentos mientras haya espectadores usando esa ruta. El backend verifica la propiedad del canal, limita cada fragmento a 1 MiB y conserva únicamente el último en memoria; no lo guarda en PostgreSQL. Las colas de entrega son limitadas y se elimina el contenido al desconectar al emisor. La reproducción agrega unos segundos de retraso. Chrome y Edge usan MediaSource; navegadores sin soporte reproducen cada fragmento como un archivo completo, con posibles pausas entre ellos. Los espectadores comienzan con el audio silenciado y pueden activar el sonido.
 
-Esta ruta usa el servicio Free existente; no exige un proveedor TURN, una tarjeta ni un nuevo plan. El video retransmitido consume la transferencia saliente incluida en Render, por lo que no representa capacidad ilimitada: al agotar las cuotas gratuitas el servicio puede suspenderse según sus condiciones. Consulta [límites de Render Free](https://render.com/docs/free). Para una conexión WebRTC con relay puedes configurar `TURN_URL`, `TURN_USERNAME` y `TURN_PASSWORD` si ya dispones de un servidor. Ante un corte breve el cliente reintenta y el backend espera 45 segundos antes de finalizar el directo.
+Esta ruta usa el servicio Free existente; no exige un proveedor TURN, una tarjeta ni un nuevo plan. El video retransmitido consume la transferencia saliente incluida en Render, por lo que no representa capacidad ilimitada: al agotar las cuotas gratuitas el servicio puede suspenderse según sus condiciones. Consulta [límites de Render Free](https://render.com/docs/free). Para una conexión WebRTC con relay puedes configurar `TURN_URL`, `TURN_USERNAME` y `TURN_PASSWORD` si ya dispones de un servidor. El backend finaliza el directo si no recibe latidos del creador durante 35 segundos. Si el WebSocket informa antes de la desconexión, el espectador recibe un aviso y el canal conserva una ventana de reconexión de 45 segundos.
 
 ## Firebase opcional
 
@@ -91,6 +91,8 @@ Render reemplaza el alojamiento Java de Google para respetar la decisión de no 
 5. Captura, recorte, publicación, descarga y enlace público de un clip.
 6. Reproducción después de reiniciar el backend y reconexión después de un corte.
 7. Navegación móvil sin desbordamiento.
-8. Clasificación y resumen reales con Ollama, registrados como `SUCCEEDED`; revisión humana cuando el túnel no está disponible.
+8. Clasificación y resumen semánticos con Ollama, registrados como `SUCCEEDED`; las reglas locales siguen permitiendo mensajes comunes cuando el túnel no está disponible.
+
+El registro solo acepta direcciones `@gmail.com` o `@hotmail.com`; la API valida el mismo requisito. El medidor de contraseña recomienda aumentar la longitud y combinar tipos de caracteres, además del mínimo de 10 caracteres.
 
 Si Render está despertando, espera a que salud responda y recarga. Ante errores revisa HTTPS, CORS y credenciales del rol. Para clips revisa FFmpeg, `MEDIA_STORAGE=database` y espacio en Supabase. No muestres secretos en capturas ni registros de soporte.
