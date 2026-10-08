@@ -46,7 +46,7 @@ class PlatformIntegrationTest {
                 "username",
                 n,
                 "email",
-                n + "@example.com",
+                n + "@gmail.com",
                 "password",
                 "TestPassword123!",
                 "aiConsent",
@@ -86,9 +86,9 @@ class PlatformIntegrationTest {
   }
 
   @Test
-  void schemaHas65DomainTablesAndForeignKeys() {
+  void schemaHas67DomainTablesAndForeignKeys() {
     assertEquals(
-        65,
+        67,
         db.count(
             "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND"
                 + " table_type='BASE TABLE' AND table_name<>'flyway_schema_history'"));
@@ -97,6 +97,59 @@ class PlatformIntegrationTest {
                 "SELECT count(*) FROM information_schema.table_constraints WHERE"
                     + " constraint_schema='public' AND constraint_type='FOREIGN KEY'")
             > 85);
+  }
+
+  @Test
+  void liveStreamersCanJoinAndLeaveAnInviteOnlyCollaboration() {
+    User host = user();
+    channel(host);
+    String hostStream = stream(host);
+    User guest = user();
+    channel(guest);
+    String guestStream = stream(guest);
+
+    var created = call(HttpMethod.POST, "/streams/" + hostStream + "/collaborations", Map.of(), host.token());
+    assertEquals(200, created.getStatusCode().value());
+    String roomId = created.getBody().get("id").toString();
+    String code = created.getBody().get("inviteCode").toString();
+    assertFalse(created.getBody().containsKey("invite_hash"));
+
+    var joined = call(HttpMethod.POST, "/collaborations/join", Map.of("code", code), guest.token());
+    assertEquals(200, joined.getStatusCode().value());
+    assertEquals(2, ((List<?>) joined.getBody().get("participants")).size());
+
+    var publicRoom = call(HttpMethod.GET, "/streams/" + hostStream + "/collaboration", null, null);
+    assertEquals(200, publicRoom.getStatusCode().value());
+    assertEquals(2, ((List<?>) publicRoom.getBody().get("participants")).size());
+
+    var guestLeft = call(HttpMethod.POST, "/collaborations/" + roomId + "/leave", Map.of(), guest.token());
+    assertEquals(200, guestLeft.getStatusCode().value());
+    assertEquals(1, ((List<?>) guestLeft.getBody().get("participants")).size());
+
+    var hostEnded = call(HttpMethod.POST, "/collaborations/" + roomId + "/leave", Map.of(), host.token());
+    assertEquals(200, hostEnded.getStatusCode().value());
+    assertEquals(false, hostEnded.getBody().get("active"));
+  }
+
+  @Test
+  void collaborationRequiresAnOwnedLiveStreamAndLimitsTheGroupToFour() {
+    User host = user(); channel(host); String hostStream = stream(host);
+    User outsider = user(); channel(outsider);
+    assertEquals(409, call(HttpMethod.POST, "/streams/" + hostStream + "/collaborations", Map.of(), outsider.token()).getStatusCode().value());
+    var created = call(HttpMethod.POST, "/streams/" + hostStream + "/collaborations", Map.of(), host.token());
+    String code = created.getBody().get("inviteCode").toString();
+    assertEquals(409, call(HttpMethod.POST, "/collaborations/join", Map.of("code", code), outsider.token()).getStatusCode().value());
+    assertEquals(409, call(HttpMethod.POST, "/streams/" + hostStream + "/collaborations", Map.of(), host.token()).getStatusCode().value());
+    for (int index = 0; index < 3; index++) {
+      User guest = user(); channel(guest); stream(guest);
+      assertEquals(200, call(HttpMethod.POST, "/collaborations/join", Map.of("code", code), guest.token()).getStatusCode().value());
+    }
+    String outsiderStream = stream(outsider);
+    assertEquals(409, call(HttpMethod.POST, "/collaborations/join", Map.of("code", code), outsider.token()).getStatusCode().value());
+    call(HttpMethod.POST, "/streams/" + hostStream + "/end", Map.of(), host.token());
+    assertEquals(404, call(HttpMethod.POST, "/collaborations/join", Map.of("code", code), outsider.token()).getStatusCode().value());
+    assertEquals(false, call(HttpMethod.GET, "/streams/" + hostStream + "/collaboration", null, null).getBody().get("active"));
+    assertEquals(200, call(HttpMethod.POST, "/streams/" + outsiderStream + "/collaborations", Map.of(), outsider.token()).getStatusCode().value());
   }
 
   @Test
@@ -124,7 +177,7 @@ class PlatformIntegrationTest {
         call(
                 HttpMethod.POST,
                 "/auth/login",
-                Map.of("email", u.username() + "@example.com", "password", "wrong-password"),
+                Map.of("email", u.username() + "@gmail.com", "password", "wrong-password"),
                 null)
             .getStatusCode()
             .value());
